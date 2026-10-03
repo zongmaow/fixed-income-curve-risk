@@ -6,6 +6,8 @@ The independent calculation is a consistency check of the implementation. It is 
 
 Maximum price gap versus `instruments.csv`: 2.842e-14 per 100 face.
 Maximum DV01 gap versus `instruments.csv`: 0.000e+00 per 100 face.
+Maximum KR01 node gap versus `instruments.csv`: 0.000e+00 per 100 face.
+Maximum book KR01 gap: $5.684e-14 per bp.
 Maximum bond scenario P&L gap: 2.842e-14 per 100 face.
 Maximum portfolio P&L gap: $8.382e-09.
 Maximum relative P&L gap: $8.382e-09.
@@ -48,6 +50,8 @@ Maximum relative P&L gap: $8.382e-09.
 - PASS  just-clearing March relative: -1000000.000000
 - PASS  key-rate weights: 0 cash flows failed
 - PASS  KR01 sum versus DV01: max abs gap 2.543e-08 per 100
+- PASS  KR01 nodes vs instruments.csv: max abs gap 0.000e+00 per 100
+- PASS  KR01 books vs kr01_by_bond.csv: max abs gap 5.684e-14 dollars per bp
 - PASS  current decision: still_outside_budget vs still_outside_budget
 - PASS  benchmark decision: reference vs reference
 - PASS  candidate_10pct_s05y decision: still_outside_budget vs still_outside_budget

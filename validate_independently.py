@@ -22,10 +22,24 @@ OUT = ROOT / "outputs"
 VALUATION = date(2023, 7, 31)
 NAV = 100_000_000.0
 DV01_TARGET = 50_000.0
+DV01_TOLERANCE = 0.02
+DV01_DUST = 1e-6
 BUDGET = 1_000_000.0
 ONE_SIDED = 0.0002
 BP = 0.0001
 NODES = (0.5, 2.0, 5.0, 10.0, 20.0, 30.0)
+KR01_COLUMNS = (
+    "kr01_0.5y_per_100",
+    "kr01_2y_per_100",
+    "kr01_5y_per_100",
+    "kr01_10y_per_100",
+    "kr01_20y_per_100",
+    "kr01_30y_per_100",
+)
+# Per 100 face. The current file matches to 0; do not widen this to hide a mismatch.
+KR01_BOND_TOLERANCE = 1e-12
+# Dollars per bp. Face-scaled gaps on this file are about 5.7e-14. Not a whole-dollar band.
+KR01_BOOK_TOLERANCE = 1e-12
 IDS = ("S06M", "S02Y", "S03Y", "S05Y", "S07Y", "S10Y", "S20Y", "S30Y")
 CONTRACTS = (
     ("S06M", 4.75, date(2024, 1, 31)),
@@ -197,6 +211,31 @@ def kr01(flows, beta):
     return out
 
 
+
+def bond_kr01_max_abs_gap(computed, published_instruments):
+    """Max |independent KR01 - instruments.csv| over bonds and nodes, per 100 face."""
+    gap = 0.0
+    for name, nodes in computed.items():
+        row = published_instruments[name]
+        for value, column in zip(nodes, KR01_COLUMNS):
+            gap = max(gap, abs(float(value) - float(row[column])))
+    return gap
+
+
+def bond_kr01_within_tolerance(computed, published_instruments, tolerance=KR01_BOND_TOLERANCE):
+    return bond_kr01_max_abs_gap(computed, published_instruments) <= tolerance
+
+
+def book_kr01_max_abs_gap(computed_by_book, published_book_rows):
+    """Max |scaled KR01 - BOOK row| in dollars per bp."""
+    gap = 0.0
+    for book, nodes in computed_by_book.items():
+        for node, value in zip(NODES, nodes):
+            published = published_book_rows[book][node]
+            gap = max(gap, abs(float(value) - float(published)))
+    return gap
+
+
 def decision_from_predicates(role, weights, dv01, relatives, turnover):
     """Same order as src/decision.py. Reference books are not executable."""
     valid = (
@@ -204,7 +243,8 @@ def decision_from_predicates(role, weights, dv01, relatives, turnover):
         and all(math.isfinite(value) and value >= -1e-12 for value in weights.values())
         and abs(sum(weights.values()) - 1.0) <= 1e-8
     )
-    dv_ok = math.isfinite(dv01) and abs(dv01 / DV01_TARGET - 1.0) <= 0.02
+    # Same dollar band as src/decision.py. DV01_DUST is numerical dust, not a wider limit.
+    dv_ok = math.isfinite(dv01) and abs(dv01 - DV01_TARGET) <= DV01_TARGET * DV01_TOLERANCE + DV01_DUST
     stress_ok = len(relatives) > 0 and all(math.isfinite(value) and value >= -BUDGET - 1e-4 for value in relatives)
     routine_ok = math.isfinite(turnover) and -1e-10 <= turnover <= 0.10 + 1e-10
     if role == "reference":
@@ -348,16 +388,49 @@ def main():
 
     max_kr_gap = 0.0
     weight_failures = 0
+    kr_by_bond = {}
     for name, _coupon, _maturity in CONTRACTS:
         flows = built[name]["flows"]
-        for t, _cf in flows:
-            weights_k = key_rate_weights(t)
+        for t_cf, _cf in flows:
+            weights_k = key_rate_weights(t_cf)
             if any(w < -1e-15 for w in weights_k) or abs(sum(weights_k) - 1.0) > 1e-12:
                 weight_failures += 1
-        kr_sum = sum(kr01(flows, beta))
-        max_kr_gap = max(max_kr_gap, abs(kr_sum - built[name]["dv01"]))
+        nodes = kr01(flows, beta)
+        kr_by_bond[name] = nodes
+        max_kr_gap = max(max_kr_gap, abs(sum(nodes) - built[name]["dv01"]))
     check("key-rate weights", weight_failures == 0, f"{weight_failures} cash flows failed")
     check("KR01 sum versus DV01", max_kr_gap < 1e-6, f"max abs gap {max_kr_gap:.3e} per 100")
+    kr_node_gap = bond_kr01_max_abs_gap(kr_by_bond, published_instruments)
+    check(
+        "KR01 nodes vs instruments.csv",
+        bond_kr01_within_tolerance(kr_by_bond, published_instruments),
+        f"max abs gap {kr_node_gap:.3e} per 100",
+    )
+    published_book_kr = {book: {} for book in solved}
+    for row in read_csv(OUT / "kr01_by_bond.csv"):
+        if row["instrument"] != "BOOK":
+            continue
+        published_book_kr[row["book"]][float(row["node_years"])] = float(row["kr01_dollars"])
+    # Scale the independent per-100 KR01 by published face. Market value divided by a
+    # repriced dirty turns a 1e-14 price gap into about 1e-11 dollars and is not the
+    # comparison against the portfolio KR01 file.
+    faces = {}
+    for row in read_csv(OUT / "positions.csv"):
+        faces.setdefault(row["book"], {})[row["instrument"]] = float(row["face"])
+    computed_book_kr = {}
+    for book in solved:
+        totals = [0.0] * 6
+        for name in IDS:
+            face = faces[book][name]
+            for i, node_kr in enumerate(kr_by_bond[name]):
+                totals[i] += (face / 100.0) * node_kr
+        computed_book_kr[book] = totals
+    kr_book_gap = book_kr01_max_abs_gap(computed_book_kr, published_book_kr)
+    check(
+        "KR01 books vs kr01_by_bond.csv",
+        kr_book_gap <= KR01_BOOK_TOLERANCE,
+        f"max abs gap {kr_book_gap:.3e} dollars per bp",
+    )
 
     for book, weights in solved.items():
         charge = book in ("candidate_10pct_s05y", "candidate_expanded_s05y")
@@ -381,6 +454,8 @@ def main():
         "",
         f"Maximum price gap versus `instruments.csv`: {max_price_gap:.3e} per 100 face.",
         f"Maximum DV01 gap versus `instruments.csv`: {max_dv01_gap:.3e} per 100 face.",
+        f"Maximum KR01 node gap versus `instruments.csv`: {kr_node_gap:.3e} per 100 face.",
+        f"Maximum book KR01 gap: ${kr_book_gap:.3e} per bp.",
         f"Maximum bond scenario P&L gap: {max_bond_pnl_gap:.3e} per 100 face.",
         f"Maximum portfolio P&L gap: ${max_pnl_gap:.3e}.",
         f"Maximum relative P&L gap: ${max_rel_gap:.3e}.",

@@ -334,5 +334,71 @@ class CaseTests(unittest.TestCase):
 
 
 
+    def test_dv01_mandate_endpoints_include_dust(self):
+        from src.decision import DV01_DUST, DV01_TARGET, dv01_within_mandate
+        import validate_independently as independent
+
+        self.assertEqual(DV01_DUST, 1e-6)
+        inside = (
+            49000.0,
+            51000.0,
+            DV01_TARGET * 1.02 + 1e-9,
+            51000.0000000001,
+        )
+        outside = (48999.0, 51001.0, 52000.0)
+        for value in inside:
+            self.assertTrue(dv01_within_mandate(value), msg=value)
+            verdict = independent.decision_from_predicates("standing", {"a": 1.0}, value, [-1.0], 0.0)
+            self.assertTrue(verdict["dv01_within_mandate"], msg=value)
+        for value in outside:
+            self.assertFalse(dv01_within_mandate(value), msg=value)
+            verdict = independent.decision_from_predicates("standing", {"a": 1.0}, value, [-1.0], 0.0)
+            self.assertFalse(verdict["dv01_within_mandate"], msg=value)
+
+    def test_workbook_dv01_dust_endpoint_is_inside_after_recalc(self):
+        if shutil.which("soffice") is None:
+            self.skipTest("LibreOffice is not installed")
+        from openpyxl import load_workbook
+        from src.workbook import cache_workbook_values
+
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "book.xlsx"
+            shutil.copy(ROOT / "fixed_income_case.xlsx", path)
+            workbook = load_workbook(path)
+            formula = workbook["Portfolio"].cell(17, 2).value
+            mandate = workbook["Portfolio"].cell(49, 2).value
+            self.assertIn("DV01Target*0.02+0.000001", formula)
+            self.assertIn("DV01Target*0.02+0.000001", mandate)
+            self.assertNotIn("/DV01Target-1", formula)
+            self.assertNotIn("/DV01Target-1", mandate)
+            workbook["Portfolio"]["B15"] = "=51000.0000000001"
+            workbook["Inputs"]["B3"] = 102_000_000
+            workbook.save(path)
+            self.assertTrue(cache_workbook_values(path))
+            recalculated = load_workbook(path, data_only=True)
+            self.assertEqual(recalculated["Portfolio"].cell(17, 2).value, "inside")
+            self.assertTrue(recalculated["Portfolio"].cell(49, 2).value)
+            self.assertEqual(recalculated["Portfolio"].cell(17, 3).value, "inside")
+
+    def test_front_bucket_kr01_fails_node_comparison(self):
+        import validate_independently as independent
+
+        with (ROOT / "outputs" / "instruments.csv").open(newline="") as handle:
+            published = {row["instrument"]: row for row in csv.DictReader(handle)}
+        bad = {}
+        for name, row in published.items():
+            parallel = float(row["dv01_per_100"])
+            bad[name] = [parallel, 0.0, 0.0, 0.0, 0.0, 0.0]
+            self.assertAlmostEqual(sum(bad[name]), parallel, places=12)
+        self.assertFalse(independent.bond_kr01_within_tolerance(bad, published))
+        self.assertGreater(independent.bond_kr01_max_abs_gap(bad, published), 0.1)
+        curves = independent.load_curves()
+        beta = curves["2023-07-31"]
+        good = {}
+        for name, coupon, maturity in independent.CONTRACTS:
+            good[name] = independent.kr01(independent.cashflows(coupon, maturity), beta)
+        self.assertTrue(independent.bond_kr01_within_tolerance(good, published))
+
+
 if __name__ == "__main__":
     unittest.main()

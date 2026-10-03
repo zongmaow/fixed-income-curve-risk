@@ -169,7 +169,7 @@ def build_workbook(path, instruments: dict, books: dict, bond_pnl_per_100: dict,
         port.cell(14, col, f"=SUM(Weights!{letter}2:{letter}9)").number_format = '0.000000%'
         port.cell(15, col, f"=SUMPRODUCT({letter}5:{letter}12,Bonds!$F$2:$F$9)").number_format = '#,##0.0000'
         port.cell(16, col, f"={letter}15-DV01Target").number_format = '#,##0.0000'
-        port.cell(17, col, f'=IF(ABS({letter}15/DV01Target-1)<=0.02,"inside","outside")')
+        port.cell(17, col, f'=IF(ABS({letter}15-DV01Target)<=DV01Target*0.02+0.000001,"inside","outside")')
     for row in (13, 14, 15, 16, 17):
         _header(port.cell(row, 1))
 
@@ -234,7 +234,7 @@ def build_workbook(path, instruments: dict, books: dict, bond_pnl_per_100: dict,
             col,
             f"=AND(COUNT(Weights!{letter}2:{letter}9)=8,{letter}{decision_row+1},{letter}{decision_row+2})",
         )
-        port.cell(decision_row + 4, col, f"=ABS({letter}15/DV01Target-1)<=0.02")
+        port.cell(decision_row + 4, col, f"=ABS({letter}15-DV01Target)<=DV01Target*0.02+0.000001")
         status_and = ",".join(f'{letter}{row}="inside"' for row in status_rows)
         port.cell(decision_row + 5, col, f"=AND({status_and})")
         port.cell(decision_row + 6, col, f"={letter}22<=Inputs!$B$7+1E-10")

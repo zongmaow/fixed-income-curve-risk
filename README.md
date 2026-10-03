@@ -1,4 +1,4 @@
-# Curve risk review, 31 July 2023
+# Curve risk review, valuation date 31 July 2023
 
 The book matches the benchmark's parallel DV01 and still has the wrong curve shape. About 74% of the $100 million sits in a 6-month bond. The 30-year bond is 26% of market value and about 93% of DV01. Total DV01 is $50,000 per bp, inside the ±2% band. That match does not keep relative performance inside the budget.
 
@@ -29,12 +29,15 @@ Where the current book's dollars sit in the two breaches (`outputs/scenario_cont
 
 Key-rate DV01 by bond and node is in `outputs/kr01_by_bond.csv`. The 20-year and 30-year nodes are about 76% of the current book's KR01.
 
-Contracts and the mandate are synthetic. Discounting uses the Federal Reserve's Gürkaynak–Sack–Wright continuous zeros from off-the-run Treasury coupons, not CMT par yields. The March shock is transplanted onto the July book. Accrued interest is out of scope. This is a static historical-stress review, not a daily backtest, and not a reconstruction of SVB or UK LDI.
+This is an after-the-fact historical stress study on the latest revised frozen Fed fit, and the 19 October endpoint was not known on the valuation date. Contracts and the mandate are synthetic. Discounting uses the Federal Reserve's Gürkaynak–Sack–Wright continuous zeros from off-the-run Treasury coupons, not CMT par yields. The March shock is transplanted onto the July book. Accrued interest is out of scope. This is a static historical-stress review, not a daily backtest, and not a reconstruction of SVB or UK LDI.
 
 Formulas and the decision rule: [docs/method.md](docs/method.md). The 2-year-to-10-year twist versus an earlier six-node stress: [docs/design-history.md](docs/design-history.md). Curve source: [Fed nominal yield curve](https://www.federalreserve.gov/data/nominal-yield-curve.htm), [Treasury tantrum note](https://www.federalreserve.gov/econres/notes/feds-notes/the-treasury-tantrum-of-2023-20240903.html), [March 2023 FOMC minutes](https://www.federalreserve.gov/monetarypolicy/fomcminutes20230322.htm).
 
 ```bash
+python3 -m pip install -r requirements.txt
 python3 reproduce_case.py
 python3 validate_independently.py
 python3 -m unittest tests/test_case.py
 ```
+
+LibreOffice is used to recalculate the workbook and cache formula values. Without LibreOffice, open the workbook in Excel and recalculate.

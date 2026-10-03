@@ -5,7 +5,8 @@ executable. Proposed and standing books use the predicates below, in order.
 
 Numerical dust: a weight may be as low as -1e-12 and the weight sum may miss 1
 by 1e-8. Relative P&L may miss -$1,000,000 by $0.0001. Turnover may miss the
-cap by 1e-10. Those allowances are float noise, not a wider mandate.
+cap by 1e-10. DV01 may miss the ±2% dollar band by 1e-6 dollars per bp.
+Those allowances are float noise, not a wider mandate.
 """
 
 from __future__ import annotations
@@ -15,6 +16,7 @@ import math
 NAV = 100_000_000.0
 DV01_TARGET = 50_000.0
 DV01_TOLERANCE = 0.02
+DV01_DUST = 1e-6
 RELATIVE_BUDGET = 1_000_000.0
 ROUTINE_TURNOVER_CAP = 0.10
 WEIGHT_FLOOR = -1e-12
@@ -46,11 +48,16 @@ def portfolio_valid(weights: dict) -> bool:
 
 
 def dv01_within_mandate(dv01: float) -> bool:
+    """True when parallel DV01 is inside ±2% of $50,000 per bp.
+
+    The comparison is abs(dv01 - 50000) <= 50000 * 0.02 + DV01_DUST.
+    DV01_DUST is numerical dust, not a wider risk limit. The economic band stays ±2%.
+    """
     if isinstance(dv01, bool) or not isinstance(dv01, (int, float)):
         return False
-    if not math.isfinite(dv01) or DV01_TARGET == 0.0:
+    if not math.isfinite(dv01):
         return False
-    return abs(dv01 / DV01_TARGET - 1.0) <= DV01_TOLERANCE
+    return abs(float(dv01) - DV01_TARGET) <= DV01_TARGET * DV01_TOLERANCE + DV01_DUST
 
 
 def stress_budget_pass(relative_pnls) -> bool:

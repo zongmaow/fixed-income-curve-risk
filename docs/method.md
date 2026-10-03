@@ -135,7 +135,7 @@ Along the buy-S05Y direction, \(u^\star\) is the smallest turnover that puts eve
 The same predicates are used in `src/decision.py` and on the Portfolio sheet.
 
 - `portfolio_valid`: every weight is finite and at least zero, and the weights sum to 1.
-- `dv01_within_mandate`: parallel DV01 is within ±2% of $50,000 per bp.
+- `dv01_within_mandate`: parallel DV01 is within ±2% of $50,000 per bp, tested as abs(DV01 − 50000) <= 50000 × 0.02 + 1e-6. The 1e-6 dollars per bp is numerical dust, not a wider risk limit.
 - `stress_budget_pass`: every named scenario's relative P&L, after that book's one-time cost, is at least −$1,000,000. No relative series means not a pass.
 - `routine_authority`: turnover versus the current book is at or under the cap in Inputs!B7 (10% of NAV). Zero turnover is inside the cap.
 
