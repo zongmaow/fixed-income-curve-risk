@@ -38,8 +38,10 @@ KR01_COLUMNS = (
 )
 # Per 100 face. The current file matches to 0; do not widen this to hide a mismatch.
 KR01_BOND_TOLERANCE = 1e-12
-# Dollars per bp. Face-scaled gaps on this file are about 5.7e-14. Not a whole-dollar band.
-KR01_BOOK_TOLERANCE = 1e-12
+# Dollars per bp. The gap is one float rounding ulp and depends on the Python build:
+# about 5.7e-14 on CPython 3.13, about 3.6e-12 on the CI image (CPython 3.11).
+# The 1e-9 band is dust, not a wider economic limit.
+KR01_BOOK_TOLERANCE = 1e-9
 IDS = ("S06M", "S02Y", "S03Y", "S05Y", "S07Y", "S10Y", "S20Y", "S30Y")
 CONTRACTS = (
     ("S06M", 4.75, date(2024, 1, 31)),
