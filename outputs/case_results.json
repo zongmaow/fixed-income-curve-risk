@@ -1,0 +1,1362 @@
+{
+  "valuation_date": "2023-07-31",
+  "nav": 100000000.0,
+  "dv01_target_per_bp": 50000.0,
+  "dv01_tolerance": 0.02,
+  "relative_loss_budget": 1000000.0,
+  "one_sided_cost_bp": 2.0,
+  "routine_turnover_cap": 0.1,
+  "accrued_interest": "out of scope; every contract accrues from the valuation date, so accrued is 0 and clean equals dirty",
+  "twist": {
+    "short_node_years": 2.0,
+    "long_node_years": 10.0,
+    "steepener_bp": " -50 at and before 2y; linear in maturity to +100 at 10y; +100 beyond 10y",
+    "flattener_bp": "+100 at and before 2y; linear in maturity to -50 at 10y; -50 beyond 10y",
+    "steepener_at_nodes_bp": [
+      -50.0,
+      -50.0,
+      6.25,
+      100.0,
+      100.0,
+      100.0
+    ],
+    "flattener_at_nodes_bp": [
+      100.0,
+      100.0,
+      43.75,
+      -50.0,
+      -50.0,
+      -50.0
+    ],
+    "not": "These are not bear steepeners or bull flatteners."
+  },
+  "node_shock_checks": {
+    "hist_2023_07_31_to_2023_10_19": {
+      "raw_bp": [
+        0.8990070520209503,
+        26.17998573747296,
+        77.43176423763563,
+        108.09743504727346,
+        119.43625161929378,
+        93.81632430647574
+      ],
+      "rounded_bp": [
+        0.9,
+        26.18,
+        77.43,
+        108.1,
+        119.44,
+        93.82
+      ]
+    },
+    "hist_2023_03_08_to_2023_03_13": {
+      "raw_bp": [
+        -37.57241693429545,
+        -95.12777170979703,
+        -62.50762223464011,
+        -41.38580522285981,
+        -21.861338302006512,
+        -13.141738505740157
+      ],
+      "rounded_bp": [
+        -37.57,
+        -95.13,
+        -62.51,
+        -41.39,
+        -21.86,
+        -13.14
+      ]
+    }
+  },
+  "curve_check_max_abs_bp": {
+    "2023-03-08": 0.004526861491216394,
+    "2023-03-13": 0.004608000512495991,
+    "2023-07-31": 0.0049536108547521,
+    "2023-10-19": 0.004920699042454402
+  },
+  "diagnostics": {
+    "current_s30y_weight": 0.26417636566859615,
+    "current_s30y_share_of_dv01": 0.9258128499867287,
+    "current_kr01_share_20y_and_30y": 0.7587005183353702,
+    "current_convexity": 111.53672637650189,
+    "benchmark_convexity": 32.36540870522759,
+    "control_scenarios_outside_budget": []
+  },
+  "books": {
+    "current": {
+      "weights": {
+        "S06M": 0.7358236343314039,
+        "S02Y": 0.0,
+        "S03Y": 0.0,
+        "S05Y": 0.0,
+        "S07Y": 0.0,
+        "S10Y": 0.0,
+        "S20Y": 0.0,
+        "S30Y": 0.26417636566859615
+      },
+      "market_value": {
+        "S06M": 73582363.43314038,
+        "S02Y": 0.0,
+        "S03Y": 0.0,
+        "S05Y": 0.0,
+        "S07Y": 0.0,
+        "S10Y": 0.0,
+        "S20Y": 0.0,
+        "S30Y": 26417636.566859614
+      },
+      "face": {
+        "S06M": 73891112.58247097,
+        "S02Y": 0.0,
+        "S03Y": 0.0,
+        "S05Y": 0.0,
+        "S07Y": 0.0,
+        "S10Y": 0.0,
+        "S20Y": 0.0,
+        "S30Y": 27208668.504053056
+      },
+      "dv01": 50000.000000000015,
+      "convexity": 111.53672637650189,
+      "kr01": {
+        "0.5": 3785.19693495027,
+        "2.0": 549.1455083065787,
+        "5.0": 1925.9701474947528,
+        "10.0": 5804.659823099583,
+        "20.0": 9387.47857442144,
+        "30.0": 28547.54209343525
+      },
+      "kr01_sum": 49999.99308170788,
+      "turnover_vs_current": 0.0,
+      "gross_traded_vs_current": 0.0,
+      "buys_vs_current": 0.0,
+      "sells_vs_current": 0.0,
+      "cost": 0.0,
+      "charge_cost": false,
+      "scenarios": {
+        "parallel_plus_100bp": {
+          "pnl": -4488675.139628375,
+          "cost": 0.0,
+          "pnl_after_cost": -4488675.139628375,
+          "node_shock_bp": [
+            100.0,
+            100.0,
+            100.0,
+            100.0,
+            100.0,
+            100.0
+          ],
+          "benchmark_pnl": -4842173.91351568,
+          "relative_pnl_after_cost": 353498.7738873046,
+          "within_budget": true,
+          "kr01_approx_pnl": -4999999.308170787,
+          "cf_first_order_pnl": -4999995.034963969,
+          "full_minus_kr01_approx": 511324.1685424121,
+          "full_minus_cf_approx": 511319.8953355942
+        },
+        "parallel_minus_100bp": {
+          "pnl": 5611015.206939481,
+          "cost": 0.0,
+          "pnl_after_cost": 5611015.206939481,
+          "node_shock_bp": [
+            -100.0,
+            -100.0,
+            -100.0,
+            -100.0,
+            -100.0,
+            -100.0
+          ],
+          "benchmark_pnl": 5165998.51320169,
+          "relative_pnl_after_cost": 445016.6937377909,
+          "within_budget": true,
+          "kr01_approx_pnl": 4999999.308170787,
+          "cf_first_order_pnl": 4999995.034963969,
+          "full_minus_kr01_approx": 611015.8987686941,
+          "full_minus_cf_approx": 611020.171975512
+        },
+        "twist_steepener": {
+          "pnl": -3666609.5161038586,
+          "cost": 0.0,
+          "pnl_after_cost": -3666609.5161038586,
+          "node_shock_bp": [
+            -50.0,
+            -50.0,
+            6.25,
+            100.0,
+            100.0,
+            100.0
+          ],
+          "benchmark_pnl": -1621896.741892063,
+          "relative_pnl_after_cost": -2044712.7742117955,
+          "within_budget": false,
+          "kr01_approx_pnl": -4169288.2403546274,
+          "cf_first_order_pnl": -4169283.9725428885,
+          "full_minus_kr01_approx": 502678.7242507688,
+          "full_minus_cf_approx": 502674.4564390299
+        },
+        "twist_flattener": {
+          "pnl": 1814301.202528623,
+          "cost": 0.0,
+          "pnl_after_cost": 1814301.202528623,
+          "node_shock_bp": [
+            100.0,
+            100.0,
+            43.75,
+            -50.0,
+            -50.0,
+            -50.0
+          ],
+          "benchmark_pnl": -765804.932292314,
+          "relative_pnl_after_cost": 2580106.134820937,
+          "within_budget": true,
+          "kr01_approx_pnl": 1669288.5862692334,
+          "cf_first_order_pnl": 1669286.4550609032,
+          "full_minus_kr01_approx": 145012.61625938956,
+          "full_minus_cf_approx": 145014.74746771972
+        },
+        "hist_2023_03_08_to_2023_03_13": {
+          "pnl": 1136871.1043016985,
+          "cost": 0.0,
+          "pnl_after_cost": 1136871.1043016985,
+          "node_shock_bp": [
+            -37.57241693429545,
+            -95.12777170979703,
+            -62.50762223464011,
+            -41.38580522285981,
+            -21.861338302006512,
+            -13.141738505740157
+          ],
+          "benchmark_pnl": 2957069.8558323453,
+          "relative_pnl_after_cost": -1820198.7515306468,
+          "within_budget": false,
+          "kr01_approx_pnl": 1135463.4992983737,
+          "cf_first_order_pnl": 1117369.0021867843,
+          "full_minus_kr01_approx": 1407.605003324803,
+          "full_minus_cf_approx": 19502.102114914218
+        },
+        "hist_2023_07_31_to_2023_10_19": {
+          "pnl": -4142727.5220958577,
+          "cost": 0.0,
+          "pnl_after_cost": -4142727.5220958577,
+          "node_shock_bp": [
+            0.8990070520209503,
+            26.17998573747296,
+            77.43176423763563,
+            108.09743504727346,
+            119.43625161929378,
+            93.81632430647574
+          ],
+          "benchmark_pnl": -4012229.43091663,
+          "relative_pnl_after_cost": -130498.09117922746,
+          "within_budget": true,
+          "kr01_approx_pnl": -4593810.365177452,
+          "cf_first_order_pnl": -4656946.332556603,
+          "full_minus_kr01_approx": 451082.843081594,
+          "full_minus_cf_approx": 514218.8104607449
+        }
+      }
+    },
+    "benchmark": {
+      "weights": {
+        "S06M": 0.0,
+        "S02Y": 0.15064789636113124,
+        "S03Y": 0.15,
+        "S05Y": 0.3,
+        "S07Y": 0.2,
+        "S10Y": 0.19935210363886874,
+        "S20Y": 0.0,
+        "S30Y": 0.0
+      },
+      "market_value": {
+        "S06M": 0.0,
+        "S02Y": 15064789.636113124,
+        "S03Y": 15000000.0,
+        "S05Y": 30000000.0,
+        "S07Y": 20000000.0,
+        "S10Y": 19935210.363886874,
+        "S20Y": 0.0,
+        "S30Y": 0.0
+      },
+      "face": {
+        "S06M": 0.0,
+        "S02Y": 15187100.055923106,
+        "S03Y": 15141537.002676807,
+        "S05Y": 30276236.33946852,
+        "S07Y": 20087040.847008776,
+        "S10Y": 20018804.385091286,
+        "S20Y": 0.0,
+        "S30Y": 0.0
+      },
+      "dv01": 50000.00000000001,
+      "convexity": 32.36540870522759,
+      "kr01": {
+        "0.5": 327.3214917501493,
+        "2.0": 7115.159002189574,
+        "5.0": 23285.57174107744,
+        "10.0": 19260.666073907978,
+        "20.0": 11.28084940824448,
+        "30.0": 0.0
+      },
+      "kr01_sum": 49999.99915833339,
+      "turnover_vs_current": 1.0,
+      "gross_traded_vs_current": 200000000.0,
+      "buys_vs_current": 100000000.0,
+      "sells_vs_current": 100000000.0,
+      "cost": 0.0,
+      "charge_cost": false,
+      "scenarios": {
+        "parallel_plus_100bp": {
+          "pnl": -4842173.91351568,
+          "cost": 0.0,
+          "pnl_after_cost": -4842173.91351568,
+          "node_shock_bp": [
+            100.0,
+            100.0,
+            100.0,
+            100.0,
+            100.0,
+            100.0
+          ],
+          "benchmark_pnl": -4842173.91351568,
+          "relative_pnl_after_cost": 0.0,
+          "within_budget": true,
+          "kr01_approx_pnl": -4999999.915833339,
+          "cf_first_order_pnl": -4999999.591489219,
+          "full_minus_kr01_approx": 157826.00231765956,
+          "full_minus_cf_approx": 157825.67797353957
+        },
+        "parallel_minus_100bp": {
+          "pnl": 5165998.51320169,
+          "cost": 0.0,
+          "pnl_after_cost": 5165998.51320169,
+          "node_shock_bp": [
+            -100.0,
+            -100.0,
+            -100.0,
+            -100.0,
+            -100.0,
+            -100.0
+          ],
+          "benchmark_pnl": 5165998.51320169,
+          "relative_pnl_after_cost": 0.0,
+          "within_budget": true,
+          "kr01_approx_pnl": 4999999.915833339,
+          "cf_first_order_pnl": 4999999.591489219,
+          "full_minus_kr01_approx": 165998.59736835118,
+          "full_minus_cf_approx": 165998.92171247117
+        },
+        "twist_steepener": {
+          "pnl": -1621896.741892063,
+          "cost": 0.0,
+          "pnl_after_cost": -1621896.741892063,
+          "node_shock_bp": [
+            -50.0,
+            -50.0,
+            6.25,
+            100.0,
+            100.0,
+            100.0
+          ],
+          "benchmark_pnl": -1621896.741892063,
+          "relative_pnl_after_cost": 0.0,
+          "within_budget": true,
+          "kr01_approx_pnl": -1700605.4910163702,
+          "cf_first_order_pnl": -1700605.2473634286,
+          "full_minus_kr01_approx": 78708.74912430719,
+          "full_minus_cf_approx": 78708.50547136553
+        },
+        "twist_flattener": {
+          "pnl": -765804.932292314,
+          "cost": 0.0,
+          "pnl_after_cost": -765804.932292314,
+          "node_shock_bp": [
+            100.0,
+            100.0,
+            43.75,
+            -50.0,
+            -50.0,
+            -50.0
+          ],
+          "benchmark_pnl": -765804.932292314,
+          "relative_pnl_after_cost": 0.0,
+          "within_budget": true,
+          "kr01_approx_pnl": -799394.4669002992,
+          "cf_first_order_pnl": -799394.5483811811,
+          "full_minus_kr01_approx": 33589.53460798517,
+          "full_minus_cf_approx": 33589.61608886707
+        },
+        "hist_2023_03_08_to_2023_03_13": {
+          "pnl": 2957069.8558323453,
+          "cost": 0.0,
+          "pnl_after_cost": 2957069.8558323453,
+          "node_shock_bp": [
+            -37.57241693429545,
+            -95.12777170979703,
+            -62.50762223464011,
+            -41.38580522285981,
+            -21.861338302006512,
+            -13.141738505740157
+          ],
+          "benchmark_pnl": 2957069.8558323453,
+          "relative_pnl_after_cost": 0.0,
+          "within_budget": true,
+          "kr01_approx_pnl": 2942037.991770216,
+          "cf_first_order_pnl": 2910252.122676757,
+          "full_minus_kr01_approx": 15031.86406212952,
+          "full_minus_cf_approx": 46817.733155588154
+        },
+        "hist_2023_07_31_to_2023_10_19": {
+          "pnl": -4012229.43091663,
+          "cost": 0.0,
+          "pnl_after_cost": -4012229.43091663,
+          "node_shock_bp": [
+            0.8990070520209503,
+            26.17998573747296,
+            77.43176423763563,
+            108.09743504727346,
+            119.43625161929378,
+            93.81632430647574
+          ],
+          "benchmark_pnl": -4012229.43091663,
+          "relative_pnl_after_cost": 0.0,
+          "within_budget": true,
+          "kr01_approx_pnl": -4072987.868980089,
+          "cf_first_order_pnl": -4153392.7519701635,
+          "full_minus_kr01_approx": 60758.438063459005,
+          "full_minus_cf_approx": 141163.32105353335
+        }
+      }
+    },
+    "candidate_10pct_s05y": {
+      "weights": {
+        "S06M": 0.6598234472213773,
+        "S02Y": 0.0,
+        "S03Y": 0.0,
+        "S05Y": 0.1,
+        "S07Y": 0.0,
+        "S10Y": 0.0,
+        "S20Y": 0.0,
+        "S30Y": 0.24017655277862265
+      },
+      "market_value": {
+        "S06M": 65982344.722137734,
+        "S02Y": 0.0,
+        "S03Y": 0.0,
+        "S05Y": 10000000.0,
+        "S07Y": 0.0,
+        "S10Y": 0.0,
+        "S20Y": 0.0,
+        "S30Y": 24017655.277862266
+      },
+      "face": {
+        "S06M": 66259204.44576306,
+        "S02Y": 0.0,
+        "S03Y": 0.0,
+        "S05Y": 10092078.77982284,
+        "S07Y": 0.0,
+        "S10Y": 0.0,
+        "S20Y": 0.0,
+        "S30Y": 24736823.789898094
+      },
+      "dv01": 50000.00000000001,
+      "convexity": 103.62377510088164,
+      "kr01": {
+        "0.5": 3427.2086466902388,
+        "2.0": 699.0468536850258,
+        "5.0": 6103.112209166619,
+        "10.0": 5281.914371437402,
+        "20.0": 8534.64781976801,
+        "30.0": 25954.063804879428
+      },
+      "kr01_sum": 49999.99370562672,
+      "turnover_vs_current": 0.09999999999999998,
+      "gross_traded_vs_current": 19999999.999999996,
+      "buys_vs_current": 10000000.0,
+      "sells_vs_current": 9999999.999999996,
+      "cost": 3999.9999999999995,
+      "charge_cost": true,
+      "scenarios": {
+        "parallel_plus_100bp": {
+          "pnl": -4524208.371502771,
+          "cost": 3999.9999999999995,
+          "pnl_after_cost": -4528208.371502771,
+          "node_shock_bp": [
+            100.0,
+            100.0,
+            100.0,
+            100.0,
+            100.0,
+            100.0
+          ],
+          "benchmark_pnl": -4842173.91351568,
+          "relative_pnl_after_cost": 313965.5420129085,
+          "within_budget": true,
+          "kr01_approx_pnl": -4999999.370562673,
+          "cf_first_order_pnl": -4999995.467794221,
+          "full_minus_kr01_approx": 475790.9990599016,
+          "full_minus_cf_approx": 475787.09629144985
+        },
+        "parallel_minus_100bp": {
+          "pnl": 5566789.981772368,
+          "cost": 3999.9999999999995,
+          "pnl_after_cost": 5562789.981772368,
+          "node_shock_bp": [
+            -100.0,
+            -100.0,
+            -100.0,
+            -100.0,
+            -100.0,
+            -100.0
+          ],
+          "benchmark_pnl": 5165998.51320169,
+          "relative_pnl_after_cost": 396791.46857067756,
+          "within_budget": true,
+          "kr01_approx_pnl": 4999999.370562673,
+          "cf_first_order_pnl": 4999995.467794221,
+          "full_minus_kr01_approx": 566790.6112096952,
+          "full_minus_cf_approx": 566794.513978147
+        },
+        "twist_steepener": {
+          "pnl": -3351801.450045864,
+          "cost": 3999.9999999999995,
+          "pnl_after_cost": -3355801.450045864,
+          "node_shock_bp": [
+            -50.0,
+            -50.0,
+            6.25,
+            100.0,
+            100.0,
+            100.0
+          ],
+          "benchmark_pnl": -1621896.741892063,
+          "relative_pnl_after_cost": -1733904.708153801,
+          "within_budget": false,
+          "kr01_approx_pnl": -3808894.275897012,
+          "cf_first_order_pnl": -3808890.3947523707,
+          "full_minus_kr01_approx": 457092.825851148,
+          "full_minus_cf_approx": 457088.94470650656
+        },
+        "twist_flattener": {
+          "pnl": 1443027.8556833616,
+          "cost": 3999.9999999999995,
+          "pnl_after_cost": 1439027.8556833616,
+          "node_shock_bp": [
+            100.0,
+            100.0,
+            43.75,
+            -50.0,
+            -50.0,
+            -50.0
+          ],
+          "benchmark_pnl": -765804.932292314,
+          "relative_pnl_after_cost": 2204832.7879756754,
+          "within_budget": true,
+          "kr01_approx_pnl": 1308894.590615676,
+          "cf_first_order_pnl": 1308892.6608552602,
+          "full_minus_kr01_approx": 134133.26506768563,
+          "full_minus_cf_approx": 134135.19482810143
+        },
+        "hist_2023_03_08_to_2023_03_13": {
+          "pnl": 1329187.3722001426,
+          "cost": 3999.9999999999995,
+          "pnl_after_cost": 1325187.3722001426,
+          "node_shock_bp": [
+            -37.57241693429545,
+            -95.12777170979703,
+            -62.50762223464011,
+            -41.38580522285981,
+            -21.861338302006512,
+            -13.141738505740157
+          ],
+          "benchmark_pnl": 2957069.8558323453,
+          "relative_pnl_after_cost": -1631882.4836322027,
+          "within_budget": false,
+          "kr01_approx_pnl": 1323014.93647386,
+          "cf_first_order_pnl": 1306958.1433918988,
+          "full_minus_kr01_approx": 6172.4357262826525,
+          "full_minus_cf_approx": 22229.22880824376
+        },
+        "hist_2023_07_31_to_2023_10_19": {
+          "pnl": -4103698.1019612784,
+          "cost": 3999.9999999999995,
+          "pnl_after_cost": -4107698.1019612784,
+          "node_shock_bp": [
+            0.8990070520209503,
+            26.17998573747296,
+            77.43176423763563,
+            108.09743504727346,
+            119.43625161929378,
+            93.81632430647574
+          ],
+          "benchmark_pnl": -4012229.43091663,
+          "relative_pnl_after_cost": -95468.67104464816,
+          "within_budget": true,
+          "kr01_approx_pnl": -4519179.474262563,
+          "cf_first_order_pnl": -4577625.839390517,
+          "full_minus_kr01_approx": 415481.3723012842,
+          "full_minus_cf_approx": 473927.73742923886
+        }
+      }
+    },
+    "candidate_expanded_s05y": {
+      "weights": {
+        "S06M": 0.3972099476065699,
+        "S02Y": 0.0,
+        "S03Y": 0.0,
+        "S05Y": 0.4455432277220821,
+        "S07Y": 0.0,
+        "S10Y": 0.0,
+        "S20Y": 0.0,
+        "S30Y": 0.15724682467134798
+      },
+      "market_value": {
+        "S06M": 39720994.76065699,
+        "S02Y": 0.0,
+        "S03Y": 0.0,
+        "S05Y": 44554322.772208214,
+        "S07Y": 0.0,
+        "S10Y": 0.0,
+        "S20Y": 0.0,
+        "S30Y": 15724682.467134798
+      },
+      "face": {
+        "S06M": 39887662.733398326,
+        "S02Y": 0.0,
+        "S03Y": 0.0,
+        "S05Y": 44964573.539878,
+        "S07Y": 0.0,
+        "S10Y": 0.0,
+        "S20Y": 0.0,
+        "S30Y": 16195531.780329358
+      },
+      "dv01": 50000.00000000001,
+      "convexity": 76.28110785502778,
+      "kr01": {
+        "0.5": 2190.204360569494,
+        "2.0": 1217.0208009045382,
+        "5.0": 20536.943715604313,
+        "10.0": 3475.602864993528,
+        "20.0": 5587.748903131953,
+        "30.0": 16992.475216332223
+      },
+      "kr01_sum": 49999.99586153605,
+      "turnover_vs_current": 0.44554322772208216,
+      "gross_traded_vs_current": 89108645.54441643,
+      "buys_vs_current": 44554322.772208214,
+      "sells_vs_current": 44554322.77220821,
+      "cost": 17821.729108883286,
+      "charge_cost": true,
+      "scenarios": {
+        "parallel_plus_100bp": {
+          "pnl": -4646991.047835533,
+          "cost": 17821.729108883286,
+          "pnl_after_cost": -4664812.776944416,
+          "node_shock_bp": [
+            100.0,
+            100.0,
+            100.0,
+            100.0,
+            100.0,
+            100.0
+          ],
+          "benchmark_pnl": -4842173.91351568,
+          "relative_pnl_after_cost": 177361.1365712639,
+          "within_budget": true,
+          "kr01_approx_pnl": -4999999.586153605,
+          "cf_first_order_pnl": -4999996.963409841,
+          "full_minus_kr01_approx": 353008.53831807245,
+          "full_minus_cf_approx": 353005.9155743085
+        },
+        "parallel_minus_100bp": {
+          "pnl": 5413972.711262562,
+          "cost": 17821.729108883286,
+          "pnl_after_cost": 5396150.982153679,
+          "node_shock_bp": [
+            -100.0,
+            -100.0,
+            -100.0,
+            -100.0,
+            -100.0,
+            -100.0
+          ],
+          "benchmark_pnl": 5165998.51320169,
+          "relative_pnl_after_cost": 230152.46895198897,
+          "within_budget": true,
+          "kr01_approx_pnl": 4999999.586153605,
+          "cf_first_order_pnl": 4999996.963409841,
+          "full_minus_kr01_approx": 413973.1251089573,
+          "full_minus_cf_approx": 413975.74785272125
+        },
+        "twist_steepener": {
+          "pnl": -2264003.497459607,
+          "cost": 17821.729108883286,
+          "pnl_after_cost": -2281825.2265684903,
+          "node_shock_bp": [
+            -50.0,
+            -50.0,
+            6.25,
+            100.0,
+            100.0,
+            100.0
+          ],
+          "benchmark_pnl": -1621896.741892063,
+          "relative_pnl_after_cost": -659928.4846764272,
+          "within_budget": true,
+          "kr01_approx_pnl": -2563577.338594596,
+          "cf_first_order_pnl": -2563574.793551923,
+          "full_minus_kr01_approx": 299573.8411349887,
+          "full_minus_cf_approx": 299571.2960923156
+        },
+        "twist_flattener": {
+          "pnl": 160117.94932244305,
+          "cost": 17821.729108883286,
+          "pnl_after_cost": 142296.22021355975,
+          "node_shock_bp": [
+            100.0,
+            100.0,
+            43.75,
+            -50.0,
+            -50.0,
+            -50.0
+          ],
+          "benchmark_pnl": -765804.932292314,
+          "relative_pnl_after_cost": 908101.1525058737,
+          "within_budget": true,
+          "kr01_approx_pnl": 63577.54551779316,
+          "cf_first_order_pnl": 63576.311847002245,
+          "full_minus_kr01_approx": 96540.40380464989,
+          "full_minus_cf_approx": 96541.6374754408
+        },
+        "hist_2023_03_08_to_2023_03_13": {
+          "pnl": 1993723.2117310732,
+          "cost": 17821.729108883286,
+          "pnl_after_cost": 1975901.48262219,
+          "node_shock_bp": [
+            -37.57241693429545,
+            -95.12777170979703,
+            -62.50762223464011,
+            -41.38580522285981,
+            -21.861338302006512,
+            -13.141738505740157
+          ],
+          "benchmark_pnl": 2957069.8558323453,
+          "relative_pnl_after_cost": -981168.3732101554,
+          "within_budget": true,
+          "kr01_approx_pnl": 1971086.2261291887,
+          "cf_first_order_pnl": 1962070.5813226276,
+          "full_minus_kr01_approx": 22636.985601884546,
+          "full_minus_cf_approx": 31652.630408445606
+        },
+        "hist_2023_07_31_to_2023_10_19": {
+          "pnl": -3968834.5838670405,
+          "cost": 17821.729108883286,
+          "pnl_after_cost": -3986656.3129759235,
+          "node_shock_bp": [
+            0.8990070520209503,
+            26.17998573747296,
+            77.43176423763563,
+            108.09743504727346,
+            119.43625161929378,
+            93.81632430647574
+          ],
+          "benchmark_pnl": -4012229.43091663,
+          "relative_pnl_after_cost": 25573.117940706667,
+          "within_budget": true,
+          "kr01_approx_pnl": -4261297.484917505,
+          "cf_first_order_pnl": -4303539.247059353,
+          "full_minus_kr01_approx": 292462.90105046425,
+          "full_minus_cf_approx": 334704.66319231223
+        }
+      }
+    },
+    "control_2y20y": {
+      "weights": {
+        "S06M": 0.0,
+        "S02Y": 0.7442007146960848,
+        "S03Y": 0.0,
+        "S05Y": 0.0,
+        "S07Y": 0.0,
+        "S10Y": 0.0,
+        "S20Y": 0.25579928530391516,
+        "S30Y": 0.0
+      },
+      "market_value": {
+        "S06M": 0.0,
+        "S02Y": 74420071.46960849,
+        "S03Y": 0.0,
+        "S05Y": 0.0,
+        "S07Y": 0.0,
+        "S10Y": 0.0,
+        "S20Y": 25579928.530391514,
+        "S30Y": 0.0
+      },
+      "face": {
+        "S06M": 0.0,
+        "S02Y": 75024285.03007644,
+        "S03Y": 0.0,
+        "S05Y": 0.0,
+        "S07Y": 0.0,
+        "S10Y": 0.0,
+        "S20Y": 26053701.316541057,
+        "S30Y": 0.0
+      },
+      "dv01": 50000.0,
+      "convexity": 64.62453413084897,
+      "kr01": {
+        "0.5": 349.1330404877709,
+        "2.0": 14657.238388771804,
+        "5.0": 1856.947667411844,
+        "10.0": 5558.260715794844,
+        "20.0": 27546.325789489256,
+        "30.0": 32.092543732327634
+      },
+      "kr01_sum": 49999.998145687845,
+      "turnover_vs_current": 1.0,
+      "gross_traded_vs_current": 200000000.0,
+      "buys_vs_current": 100000000.0,
+      "sells_vs_current": 100000000.0,
+      "cost": 0.0,
+      "charge_cost": false,
+      "scenarios": {
+        "parallel_plus_100bp": {
+          "pnl": -4695244.206754534,
+          "cost": 0.0,
+          "pnl_after_cost": -4695244.206754534,
+          "node_shock_bp": [
+            100.0,
+            100.0,
+            100.0,
+            100.0,
+            100.0,
+            100.0
+          ],
+          "benchmark_pnl": -4842173.91351568,
+          "relative_pnl_after_cost": 146929.70676114596,
+          "within_budget": true,
+          "kr01_approx_pnl": -4999999.814568784,
+          "cf_first_order_pnl": -4999998.07477793,
+          "full_minus_kr01_approx": 304755.6078142505,
+          "full_minus_cf_approx": 304753.86802339647
+        },
+        "parallel_minus_100bp": {
+          "pnl": 5343327.780016813,
+          "cost": 0.0,
+          "pnl_after_cost": 5343327.780016813,
+          "node_shock_bp": [
+            -100.0,
+            -100.0,
+            -100.0,
+            -100.0,
+            -100.0,
+            -100.0
+          ],
+          "benchmark_pnl": 5165998.51320169,
+          "relative_pnl_after_cost": 177329.26681512315,
+          "within_budget": true,
+          "kr01_approx_pnl": 4999999.814568784,
+          "cf_first_order_pnl": 4999998.07477793,
+          "full_minus_kr01_approx": 343327.96544802934,
+          "full_minus_cf_approx": 343329.7052388834
+        },
+        "twist_steepener": {
+          "pnl": -2288389.549770671,
+          "cost": 0.0,
+          "pnl_after_cost": -2288389.549770671,
+          "node_shock_bp": [
+            -50.0,
+            -50.0,
+            6.25,
+            100.0,
+            100.0,
+            100.0
+          ],
+          "benchmark_pnl": -1621896.741892063,
+          "relative_pnl_after_cost": -666492.8078786079,
+          "within_budget": true,
+          "kr01_approx_pnl": -2574955.256359988,
+          "cf_first_order_pnl": -2574953.5355166183,
+          "full_minus_kr01_approx": 286565.70658931695,
+          "full_minus_cf_approx": 286563.98574594734
+        },
+        "twist_flattener": {
+          "pnl": 167289.58495322615,
+          "cost": 0.0,
+          "pnl_after_cost": 167289.58495322615,
+          "node_shock_bp": [
+            100.0,
+            100.0,
+            43.75,
+            -50.0,
+            -50.0,
+            -50.0
+          ],
+          "benchmark_pnl": -765804.932292314,
+          "relative_pnl_after_cost": 933094.5172455402,
+          "within_budget": true,
+          "kr01_approx_pnl": 74955.34907559585,
+          "cf_first_order_pnl": 74954.4981276535,
+          "full_minus_kr01_approx": 92334.2358776303,
+          "full_minus_cf_approx": 92335.08682557265
+        },
+        "hist_2023_03_08_to_2023_03_13": {
+          "pnl": 2385854.248944815,
+          "cost": 0.0,
+          "pnl_after_cost": 2385854.248944815,
+          "node_shock_bp": [
+            -37.57241693429545,
+            -95.12777170979703,
+            -62.50762223464011,
+            -41.38580522285981,
+            -21.861338302006512,
+            -13.141738505740157
+          ],
+          "benchmark_pnl": 2957069.8558323453,
+          "relative_pnl_after_cost": -571215.6068875305,
+          "within_budget": true,
+          "kr01_approx_pnl": 2356155.977050762,
+          "cf_first_order_pnl": 2352404.11418568,
+          "full_minus_kr01_approx": 29698.271894052625,
+          "full_minus_cf_approx": 33450.13475913461
+        },
+        "hist_2023_07_31_to_2023_10_19": {
+          "pnl": -4061014.1790059702,
+          "cost": 0.0,
+          "pnl_after_cost": -4061014.1790059702,
+          "node_shock_bp": [
+            0.8990070520209503,
+            26.17998573747296,
+            77.43176423763563,
+            108.09743504727346,
+            119.43625161929378,
+            93.81632430647574
+          ],
+          "benchmark_pnl": -4012229.43091663,
+          "relative_pnl_after_cost": -48784.74808934005,
+          "within_budget": true,
+          "kr01_approx_pnl": -4421701.3283914765,
+          "cf_first_order_pnl": -4463437.89295681,
+          "full_minus_kr01_approx": 360687.1493855063,
+          "full_minus_cf_approx": 402423.7139508398
+        }
+      }
+    }
+  },
+  "candidate_family": [
+    {
+      "buy": "S02Y",
+      "feasible": true,
+      "turnover_just": 0.6215782148888678,
+      "max_turnover_long_only": 0.8035107578257961,
+      "turnover_cap_from_constraints": 0.8035107578257961,
+      "binding_lower_scenario": "hist_2023_03_08_to_2023_03_13",
+      "s06m_financing_fraction": 0.9157607750298883,
+      "bounds": [
+        {
+          "scenario": "parallel_plus_100bp",
+          "relative_at_zero_turnover": 353498.7738873046,
+          "slope_dollars_per_unit_turnover": -184904.72785373288,
+          "kind": "upper_bound",
+          "turnover_bound": 7.319979264986544
+        },
+        {
+          "scenario": "parallel_minus_100bp",
+          "relative_at_zero_turnover": 445016.6937377909,
+          "slope_dollars_per_unit_turnover": -216442.72896608413,
+          "kind": "upper_bound",
+          "turnover_bound": 6.676208069637767
+        },
+        {
+          "scenario": "twist_steepener",
+          "relative_at_zero_turnover": -2044712.7742117955,
+          "slope_dollars_per_unit_turnover": 1929988.1481973983,
+          "kind": "lower_bound",
+          "turnover_bound": 0.5413052796140502
+        },
+        {
+          "scenario": "twist_flattener",
+          "relative_at_zero_turnover": 2580106.134820937,
+          "slope_dollars_per_unit_turnover": -2193822.7142984685,
+          "kind": "upper_bound",
+          "turnover_bound": 1.631903121199002
+        },
+        {
+          "scenario": "hist_2023_03_08_to_2023_03_13",
+          "relative_at_zero_turnover": -1820198.7515306468,
+          "slope_dollars_per_unit_turnover": 1319542.3067992989,
+          "kind": "lower_bound",
+          "turnover_bound": 0.6215782148888678
+        },
+        {
+          "scenario": "hist_2023_07_31_to_2023_10_19",
+          "relative_at_zero_turnover": -130498.09117922746,
+          "slope_dollars_per_unit_turnover": 787493.1770234754,
+          "kind": "lower_bound",
+          "turnover_bound": -1.1041389743937458
+        }
+      ]
+    },
+    {
+      "buy": "S03Y",
+      "feasible": true,
+      "turnover_just": 0.5038140938438629,
+      "max_turnover_long_only": 0.8535413805799272,
+      "turnover_cap_from_constraints": 0.8535413805799272,
+      "binding_lower_scenario": "hist_2023_03_08_to_2023_03_13",
+      "s06m_financing_fraction": 0.8620831409854532,
+      "bounds": [
+        {
+          "scenario": "parallel_plus_100bp",
+          "relative_at_zero_turnover": 353498.7738873046,
+          "slope_dollars_per_unit_turnover": -266027.81364663946,
+          "kind": "upper_bound",
+          "turnover_bound": 5.087809260745704
+        },
+        {
+          "scenario": "parallel_minus_100bp",
+          "relative_at_zero_turnover": 445016.6937377909,
+          "slope_dollars_per_unit_turnover": -317243.777899875,
+          "kind": "upper_bound",
+          "turnover_bound": 4.554909487283471
+        },
+        {
+          "scenario": "twist_steepener",
+          "relative_at_zero_turnover": -2044712.7742117955,
+          "slope_dollars_per_unit_turnover": 2670587.0562041425,
+          "kind": "lower_bound",
+          "turnover_bound": 0.3911921806798185
+        },
+        {
+          "scenario": "twist_flattener",
+          "relative_at_zero_turnover": 2580106.134820937,
+          "slope_dollars_per_unit_turnover": -3057459.4036654737,
+          "kind": "upper_bound",
+          "turnover_bound": 1.1709415112851154
+        },
+        {
+          "scenario": "hist_2023_03_08_to_2023_03_13",
+          "relative_at_zero_turnover": -1820198.7515306468,
+          "slope_dollars_per_unit_turnover": 1627978.973896738,
+          "kind": "lower_bound",
+          "turnover_bound": 0.5038140938438629
+        },
+        {
+          "scenario": "hist_2023_07_31_to_2023_10_19",
+          "relative_at_zero_turnover": -130498.09117922746,
+          "slope_dollars_per_unit_turnover": 823173.3945048468,
+          "kind": "lower_bound",
+          "turnover_bound": -1.056280383483231
+        }
+      ]
+    },
+    {
+      "buy": "S05Y",
+      "feasible": true,
+      "turnover_just": 0.4355432277220821,
+      "max_turnover_long_only": 0.9681866088910306,
+      "turnover_cap_from_constraints": 0.9539995752208696,
+      "binding_lower_scenario": "hist_2023_03_08_to_2023_03_13",
+      "s06m_financing_fraction": 0.7600018711002652,
+      "bounds": [
+        {
+          "scenario": "parallel_plus_100bp",
+          "relative_at_zero_turnover": 353498.7738873046,
+          "slope_dollars_per_unit_turnover": -395332.3187439651,
+          "kind": "upper_bound",
+          "turnover_bound": 3.4236987711695055
+        },
+        {
+          "scenario": "parallel_minus_100bp",
+          "relative_at_zero_turnover": 445016.6937377909,
+          "slope_dollars_per_unit_turnover": -482252.2516711436,
+          "kind": "upper_bound",
+          "turnover_bound": 2.9963918026932794
+        },
+        {
+          "scenario": "twist_steepener",
+          "relative_at_zero_turnover": -2044712.7742117955,
+          "slope_dollars_per_unit_turnover": 3108080.660579941,
+          "kind": "lower_bound",
+          "turnover_bound": 0.3361279478560448
+        },
+        {
+          "scenario": "twist_flattener",
+          "relative_at_zero_turnover": 2580106.134820937,
+          "slope_dollars_per_unit_turnover": -3752733.4684526166,
+          "kind": "upper_bound",
+          "turnover_bound": 0.9539995752208696
+        },
+        {
+          "scenario": "hist_2023_03_08_to_2023_03_13",
+          "relative_at_zero_turnover": -1820198.7515306468,
+          "slope_dollars_per_unit_turnover": 1883162.6789844416,
+          "kind": "lower_bound",
+          "turnover_bound": 0.4355432277220821
+        },
+        {
+          "scenario": "hist_2023_07_31_to_2023_10_19",
+          "relative_at_zero_turnover": -130498.09117922746,
+          "slope_dollars_per_unit_turnover": 350294.20134579425,
+          "kind": "lower_bound",
+          "turnover_bound": -2.482204688174214
+        }
+      ]
+    },
+    {
+      "buy": "S07Y",
+      "feasible": true,
+      "turnover_just": 0.4453178215631686,
+      "max_turnover_long_only": 0.7911130534687808,
+      "turnover_cap_from_constraints": 0.7911130534687808,
+      "binding_lower_scenario": "twist_steepener",
+      "s06m_financing_fraction": 0.6660700205738406,
+      "bounds": [
+        {
+          "scenario": "parallel_plus_100bp",
+          "relative_at_zero_turnover": 353498.7738873046,
+          "slope_dollars_per_unit_turnover": -483774.3114820328,
+          "kind": "upper_bound",
+          "turnover_bound": 2.797789675398201
+        },
+        {
+          "scenario": "parallel_minus_100bp",
+          "relative_at_zero_turnover": 445016.6937377909,
+          "slope_dollars_per_unit_turnover": -600347.5900504189,
+          "kind": "upper_bound",
+          "turnover_bound": 2.406966760067171
+        },
+        {
+          "scenario": "twist_steepener",
+          "relative_at_zero_turnover": -2044712.7742117955,
+          "slope_dollars_per_unit_turnover": 2345993.6333664167,
+          "kind": "lower_bound",
+          "turnover_bound": 0.4453178215631686
+        },
+        {
+          "scenario": "twist_flattener",
+          "relative_at_zero_turnover": 2580106.134820937,
+          "slope_dollars_per_unit_turnover": -3202200.405376416,
+          "kind": "upper_bound",
+          "turnover_bound": 1.1180143906077915
+        },
+        {
+          "scenario": "hist_2023_03_08_to_2023_03_13",
+          "relative_at_zero_turnover": -1820198.7515306468,
+          "slope_dollars_per_unit_turnover": 1972395.735282537,
+          "kind": "lower_bound",
+          "turnover_bound": 0.4158388384535606
+        },
+        {
+          "scenario": "hist_2023_07_31_to_2023_10_19",
+          "relative_at_zero_turnover": -130498.09117922746,
+          "slope_dollars_per_unit_turnover": -244711.07016931043,
+          "kind": "upper_bound",
+          "turnover_bound": 3.5531776646605424
+        }
+      ]
+    },
+    {
+      "buy": "S10Y",
+      "feasible": false,
+      "turnover_just": 0.4328048644871217,
+      "max_turnover_long_only": 0.5723555197450148,
+      "turnover_cap_from_constraints": -2.3600350285062057,
+      "binding_lower_scenario": "hist_2023_03_08_to_2023_03_13",
+      "s06m_financing_fraction": 0.5384400839074862,
+      "bounds": [
+        {
+          "scenario": "parallel_plus_100bp",
+          "relative_at_zero_turnover": 353498.7738873046,
+          "slope_dollars_per_unit_turnover": -553716.4325202449,
+          "kind": "upper_bound",
+          "turnover_bound": 2.444389753301783
+        },
+        {
+          "scenario": "parallel_minus_100bp",
+          "relative_at_zero_turnover": 445016.6937377909,
+          "slope_dollars_per_unit_turnover": -702667.7380527441,
+          "kind": "upper_bound",
+          "turnover_bound": 2.0564722350029454
+        },
+        {
+          "scenario": "twist_steepener",
+          "relative_at_zero_turnover": -2044712.7742117955,
+          "slope_dollars_per_unit_turnover": -442668.33398360654,
+          "kind": "upper_bound",
+          "turnover_bound": -2.3600350285062057
+        },
+        {
+          "scenario": "twist_flattener",
+          "relative_at_zero_turnover": 2580106.134820937,
+          "slope_dollars_per_unit_turnover": -324713.5323888056,
+          "kind": "upper_bound",
+          "turnover_bound": 11.02542942538714
+        },
+        {
+          "scenario": "hist_2023_03_08_to_2023_03_13",
+          "relative_at_zero_turnover": -1820198.7515306468,
+          "slope_dollars_per_unit_turnover": 1895077.4790911626,
+          "kind": "lower_bound",
+          "turnover_bound": 0.4328048644871217
+        },
+        {
+          "scenario": "hist_2023_07_31_to_2023_10_19",
+          "relative_at_zero_turnover": -130498.09117922746,
+          "slope_dollars_per_unit_turnover": -1042166.8549837089,
+          "kind": "upper_bound",
+          "turnover_bound": 0.8343212074561367
+        }
+      ]
+    },
+    {
+      "buy": "S20Y",
+      "feasible": false,
+      "turnover_just": 0.9243428852045668,
+      "max_turnover_long_only": 0.33538956486553856,
+      "turnover_cap_from_constraints": -2.7247207883139195,
+      "binding_lower_scenario": "hist_2023_03_08_to_2023_03_13",
+      "s06m_financing_fraction": 0.21232979990147446,
+      "bounds": [
+        {
+          "scenario": "parallel_plus_100bp",
+          "relative_at_zero_turnover": 353498.7738873046,
+          "slope_dollars_per_unit_turnover": -425970.0584279133,
+          "kind": "upper_bound",
+          "turnover_bound": 3.1774504970667006
+        },
+        {
+          "scenario": "parallel_minus_100bp",
+          "relative_at_zero_turnover": 445016.6937377909,
+          "slope_dollars_per_unit_turnover": -573147.0014122514,
+          "kind": "upper_bound",
+          "turnover_bound": 2.521197337118098
+        },
+        {
+          "scenario": "twist_steepener",
+          "relative_at_zero_turnover": -2044712.7742117955,
+          "slope_dollars_per_unit_turnover": -383420.12095054804,
+          "kind": "upper_bound",
+          "turnover_bound": -2.7247207883139195
+        },
+        {
+          "scenario": "twist_flattener",
+          "relative_at_zero_turnover": 2580106.134820937,
+          "slope_dollars_per_unit_turnover": -212538.45808590658,
+          "kind": "upper_bound",
+          "turnover_bound": 16.84450977513859
+        },
+        {
+          "scenario": "hist_2023_03_08_to_2023_03_13",
+          "relative_at_zero_turnover": -1820198.7515306468,
+          "slope_dollars_per_unit_turnover": 887331.7084591702,
+          "kind": "lower_bound",
+          "turnover_bound": 0.9243428852045668
+        },
+        {
+          "scenario": "hist_2023_07_31_to_2023_10_19",
+          "relative_at_zero_turnover": -130498.09117922746,
+          "slope_dollars_per_unit_turnover": -2127995.1639526454,
+          "kind": "upper_bound",
+          "turnover_bound": 0.4086014496413215
+        }
+      ]
+    }
+  ],
+  "case_decision": {
+    "published_10pct_direction": "S05Y",
+    "reason": "The 10% book under review buys S05Y. Other directions are reported. The expanded book stays on the S05Y direction and is not a search over all portfolios.",
+    "directions_that_clear_at_lower_turnover": [],
+    "lowest_feasible_direction": {
+      "buy": "S05Y",
+      "turnover_just": 0.4355432277220821
+    }
+  },
+  "expanded_s05y": {
+    "turnover_just": 0.4355432277220821,
+    "binding_scenario_at_just": "hist_2023_03_08_to_2023_03_13",
+    "turnover_with_one_point_buffer": 0.4455432277220821,
+    "buffer": 0.01,
+    "just_clearing_relative_pnl": {
+      "parallel_plus_100bp": 181314.45975870267,
+      "parallel_minus_100bp": 234974.99146870058,
+      "twist_steepener": -691009.2912822268,
+      "twist_flattener": 945628.4871904003,
+      "hist_2023_03_08_to_2023_03_13": -1000000.0,
+      "hist_2023_07_31_to_2023_10_19": 22070.175927248783
+    },
+    "just_clearing_turnover_check": 0.435543227722082,
+    "tightest_scenario": "hist_2023_03_08_to_2023_03_13",
+    "cushion_dollars": 18831.626789844595,
+    "breakeven_one_sided_cost_bp": 4.113333299456103,
+    "gross_traded": 89108645.54441643
+  },
+  "design_note_differences": [
+    {
+      "scenario": "twist_steepener",
+      "field": "current_pnl",
+      "design_note_wan": -365.48,
+      "computed_wan": -366.66,
+      "computed_dollars": -3666609.5161038586
+    },
+    {
+      "scenario": "twist_steepener",
+      "field": "benchmark_pnl",
+      "design_note_wan": -147.78,
+      "computed_wan": -162.19,
+      "computed_dollars": -1621896.741892063
+    },
+    {
+      "scenario": "twist_steepener",
+      "field": "current_relative",
+      "design_note_wan": -217.7,
+      "computed_wan": -204.47,
+      "computed_dollars": -2044712.7742117955
+    },
+    {
+      "scenario": "twist_steepener",
+      "field": "candidate_10_relative",
+      "design_note_wan": -184.01,
+      "computed_wan": -173.39,
+      "computed_dollars": -1733904.708153801
+    },
+    {
+      "scenario": "twist_steepener",
+      "field": "expanded_relative",
+      "design_note_wan": -67.6,
+      "computed_wan": -65.99,
+      "computed_dollars": -659928.4846764272
+    },
+    {
+      "scenario": "twist_flattener",
+      "field": "current_pnl",
+      "design_note_wan": 189.85,
+      "computed_wan": 181.43,
+      "computed_dollars": 1814301.202528623
+    },
+    {
+      "scenario": "twist_flattener",
+      "field": "benchmark_pnl",
+      "design_note_wan": 24.62,
+      "computed_wan": -76.58,
+      "computed_dollars": -765804.932292314
+    },
+    {
+      "scenario": "twist_flattener",
+      "field": "current_relative",
+      "design_note_wan": 165.23,
+      "computed_wan": 258.01,
+      "computed_dollars": 2580106.134820937
+    },
+    {
+      "scenario": "twist_flattener",
+      "field": "candidate_10_relative",
+      "design_note_wan": 145.77,
+      "computed_wan": 220.48,
+      "computed_dollars": 2204832.7879756754
+    },
+    {
+      "scenario": "twist_flattener",
+      "field": "expanded_relative",
+      "design_note_wan": 78.51,
+      "computed_wan": 90.81,
+      "computed_dollars": 908101.1525058737
+    }
+  ]
+}

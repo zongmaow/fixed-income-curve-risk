@@ -1,0 +1,60 @@
+{
+  "source_url": "https://www.federalreserve.gov/data/yield-curve-tables/feds200628.csv",
+  "source_page": "https://www.federalreserve.gov/data/nominal-yield-curve.htm",
+  "download_time_america_los_angeles": "2026-10-03T00:55:19-07:00",
+  "original_file_sha256": "379cae673092e64aea0baa58796b276ebc5c9c7f2c342d66e7b1fe1e52fd0421",
+  "frozen_file": "data/curve_parameters_2022_2023.csv",
+  "frozen_file_sha256": "25b815d553ac63453703ab44a77cb42c4739c0b1a3e79adfe0e0c6a00d5f4f27",
+  "published_sveny_excerpt": "data/published_sveny_event_dates.csv",
+  "published_sveny_excerpt_sha256": "2ac5c63aec74ffdcfcc20f7e081a37ac514e4767aa6e46419ae0518938159807",
+  "parameter_units": "percent",
+  "compounding": "continuous",
+  "parameters": [
+    "BETA0",
+    "BETA1",
+    "BETA2",
+    "BETA3",
+    "TAU1",
+    "TAU2"
+  ],
+  "zero_formula": "y(n)=BETA0+BETA1*(1-exp(-n/TAU1))/(n/TAU1)+BETA2*[(1-exp(-n/TAU1))/(n/TAU1)-exp(-n/TAU1)]+BETA3*[(1-exp(-n/TAU2))/(n/TAU2)-exp(-n/TAU2)]; z=y/100",
+  "filter": {
+    "start": "2022-01-01",
+    "end": "2023-12-31",
+    "dated_rows": 520,
+    "dropped_missing_beta_or_tau": 21,
+    "usable_days": 499
+  },
+  "dropped_dates": [
+    "2022-01-17",
+    "2022-02-21",
+    "2022-04-15",
+    "2022-05-30",
+    "2022-06-20",
+    "2022-07-04",
+    "2022-09-05",
+    "2022-10-10",
+    "2022-11-11",
+    "2022-11-24",
+    "2022-12-26",
+    "2023-01-02",
+    "2023-01-16",
+    "2023-02-20",
+    "2023-05-29",
+    "2023-06-19",
+    "2023-07-04",
+    "2023-09-04",
+    "2023-10-09",
+    "2023-11-23",
+    "2023-12-25"
+  ],
+  "valuation_date_parameters": {
+    "BETA0": 4.25771308403555,
+    "BETA1": 1.4049880707189,
+    "BETA2": 9925.52745212531,
+    "BETA3": -9926.94373630387,
+    "TAU1": 1.71414947795679,
+    "TAU2": 1.714472779363
+  },
+  "valuation_date_note": "On 2023-07-31 TAU1 and TAU2 nearly coincide and BETA2, BETA3 are large and opposite. Zeros are still taken from the Svensson function. Shocks are not applied to the six parameters."
+}
