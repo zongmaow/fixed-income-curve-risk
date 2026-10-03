@@ -153,3 +153,63 @@ def scenario_return(instrument: dict, pnl_per_100: float) -> float:
 
 def book_pnl(weights: dict[str, float], returns: dict[str, float]) -> float:
     return sum(weights.get(name, 0.0) * NAV * ret for name, ret in returns.items())
+
+
+def scenario_turnover_bound(slope: float, relative_at_zero: float, budget: float = RELATIVE_BUDGET, slope_epsilon: float = 1e-8) -> dict:
+    """Map one scenario's linear relative P&L to a turnover bound.
+
+    A zero slope does not create a turnover number. If the book is already
+    inside the budget, no trade is required. If it is outside, the direction
+    cannot repair that scenario at any size.
+    """
+    record = {
+        "relative_at_zero_turnover": relative_at_zero,
+        "slope_dollars_per_unit_turnover": slope,
+    }
+    if abs(slope) <= slope_epsilon:
+        record["kind"] = "flat"
+        if relative_at_zero >= -budget:
+            record["feasible_if"] = "already_inside"
+        else:
+            record["feasible_if"] = "impossible"
+        return record
+    record["kind"] = "lower_bound" if slope > 0.0 else "upper_bound"
+    record["turnover_bound"] = (-budget - relative_at_zero) / slope
+    return record
+
+
+def aggregate_clearing(bounds: list[dict], max_turnover: float) -> dict:
+    """Combine scenario bounds. Flat rows are not read for a turnover number."""
+    lowers = []
+    uppers = []
+    blocked = []
+    for row in bounds:
+        kind = row["kind"]
+        if kind == "flat":
+            if "turnover_bound" in row:
+                raise ValueError("a flat scenario must not carry turnover_bound")
+            if row.get("feasible_if") == "impossible":
+                blocked.append(row)
+            elif row.get("feasible_if") != "already_inside":
+                raise ValueError("flat scenario needs feasible_if already_inside or impossible")
+            continue
+        if kind == "lower_bound":
+            lowers.append(row)
+        elif kind == "upper_bound":
+            uppers.append(row)
+        else:
+            raise ValueError(f"unknown bound kind {kind}")
+    turnover_just = max([0.0] + [row["turnover_bound"] for row in lowers])
+    turnover_cap = min([max_turnover] + [row["turnover_bound"] for row in uppers])
+    bad_upper = any(row["turnover_bound"] < -1e-12 for row in uppers)
+    feasible = (not blocked) and (not bad_upper) and turnover_just <= turnover_cap + 1e-12
+    binding = None
+    if lowers:
+        binding = max(lowers, key=lambda row: row["turnover_bound"]).get("scenario")
+    return {
+        "turnover_just": turnover_just,
+        "turnover_cap_from_constraints": turnover_cap,
+        "feasible": feasible,
+        "binding_lower_scenario": binding,
+        "blocked_flat_scenarios": [row.get("scenario") for row in blocked],
+    }

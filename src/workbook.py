@@ -2,6 +2,12 @@
 
 from __future__ import annotations
 
+import os
+import shutil
+import subprocess
+import tempfile
+from pathlib import Path
+
 from openpyxl import Workbook
 from openpyxl.formatting.rule import CellIsRule
 from openpyxl.styles import Alignment, Font, PatternFill
@@ -32,6 +38,13 @@ APPLY_COST = {
     "candidate_10pct_s05y": 1,
     "candidate_expanded_s05y": 1,
     "control_2y20y": 0,
+}
+BOOK_ROLES = {
+    "current": "standing",
+    "benchmark": "reference",
+    "candidate_10pct_s05y": "proposed",
+    "candidate_expanded_s05y": "proposed",
+    "control_2y20y": "reference",
 }
 
 
@@ -200,8 +213,45 @@ def build_workbook(path, instruments: dict, books: dict, bond_pnl_per_100: dict,
         for offset in range(3):
             _header(port.cell(base + offset, 1))
 
-    red = PatternFill("solid", fgColor="F4C7C3")
     last_status = start + 1 + (len(SCENARIO_ORDER) - 1) * 3 + 2
+    decision_row = last_status + 2
+    port.cell(decision_row, 1, "Role")
+    port.cell(decision_row + 1, 1, "Weights non-negative")
+    port.cell(decision_row + 2, 1, "Weights sum to 1")
+    port.cell(decision_row + 3, 1, "portfolio_valid")
+    port.cell(decision_row + 4, 1, "dv01_within_mandate")
+    port.cell(decision_row + 5, 1, "stress_budget_pass")
+    port.cell(decision_row + 6, 1, "routine_authority")
+    port.cell(decision_row + 7, 1, "decision")
+    status_rows = [start + 1 + 3 * s + 2 for s in range(len(SCENARIO_ORDER))]
+    for col, book in enumerate(BOOK_ORDER, 2):
+        letter = get_column_letter(col)
+        port.cell(decision_row, col, BOOK_ROLES[book])
+        port.cell(decision_row + 1, col, f"=MIN(Weights!{letter}2:{letter}9)>=-1E-12")
+        port.cell(decision_row + 2, col, f"=ABS(SUM(Weights!{letter}2:{letter}9)-1)<=1E-8")
+        port.cell(
+            decision_row + 3,
+            col,
+            f"=AND(COUNT(Weights!{letter}2:{letter}9)=8,{letter}{decision_row+1},{letter}{decision_row+2})",
+        )
+        port.cell(decision_row + 4, col, f"=ABS({letter}15/DV01Target-1)<=0.02")
+        status_and = ",".join(f'{letter}{row}="inside"' for row in status_rows)
+        port.cell(decision_row + 5, col, f"=AND({status_and})")
+        port.cell(decision_row + 6, col, f"={letter}22<=Inputs!$B$7+1E-10")
+        port.cell(
+            decision_row + 7,
+            col,
+            (
+                f'=IF({letter}{decision_row}="reference","reference",'
+                f'IF(NOT({letter}{decision_row+3}),"invalid_portfolio",'
+                f'IF(NOT(AND({letter}{decision_row+4},{letter}{decision_row+5})),"still_outside_budget",'
+                f'IF(NOT({letter}{decision_row+6}),"needs_approval","executable_within_authority"))))'
+            ),
+        )
+    for row in range(decision_row, decision_row + 8):
+        _header(port.cell(row, 1))
+
+    red = PatternFill("solid", fgColor="F4C7C3")
     port.conditional_formatting.add(
         f"B{start+1}:F{last_status}",
         CellIsRule(operator="equal", formula=['"outside"'], fill=red),
@@ -253,7 +303,8 @@ def build_workbook(path, instruments: dict, books: dict, bond_pnl_per_100: dict,
         "Scenario P&L is the sum of market value times the bond's full-revaluation return, minus that cost.",
         "Relative P&L subtracts the benchmark column. Inside the budget means relative P&L is not worse than -Budget.",
         "The steepener is -50 bp at and before 2y, +100 bp at and beyond 10y, linear in maturity between those nodes. The flattener swaps the signs. Neither is a bear steepener or a bull flattener.",
-        f"At the time this file was written, the expanded S05Y book's tightest scenario had a one-sided cost break-even of {breakeven_bp:.4f} bp. The live formula below recomputes that break-even from the Portfolio sheet. A one-sided cost above it exhausts the cushion. 4.2 bp is the design note's illustration; it exhausts the cushion only if the live break-even is below 4.2.",
+        f"At the time this file was written, the expanded S05Y book's tightest scenario had a one-sided cost break-even of {breakeven_bp:.4f} bp. The live formula below recomputes that break-even. A one-sided cost above it exhausts the March cushion. Inputs!B7 is the routine turnover cap used by routine_authority.",
+        "Decision order: reference books stay reference; otherwise invalid_portfolio, still_outside_budget, needs_approval, or executable_within_authority. Being inside a scenario budget is not the same as being executable.",
     ]
     for i, line in enumerate(lines):
         notes.cell(3 + i, 1, line)
@@ -276,3 +327,47 @@ def build_workbook(path, instruments: dict, books: dict, bond_pnl_per_100: dict,
     notes.column_dimensions["B"].width = 22
 
     wb.save(path)
+
+
+def cache_workbook_values(path) -> bool:
+    """Recalculate with LibreOffice so formula cells carry cached values.
+
+    Returns False when soffice is not installed. Raises if soffice runs and fails.
+    """
+    soffice = shutil.which("soffice")
+    if not soffice:
+        return False
+    path = Path(path).resolve()
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        home = tmp_path / "home"
+        home.mkdir()
+        src = tmp_path / "book.xlsx"
+        shutil.copy(path, src)
+        out = tmp_path / "out"
+        out.mkdir()
+        env = os.environ.copy()
+        env["HOME"] = str(home)
+        proc = subprocess.run(
+            [
+                soffice,
+                "--headless",
+                "--norestore",
+                "--nolockcheck",
+                "--convert-to",
+                "xlsx",
+                "--outdir",
+                str(out),
+                str(src),
+            ],
+            check=False,
+            env=env,
+            capture_output=True,
+            text=True,
+            timeout=180,
+        )
+        produced = out / "book.xlsx"
+        if proc.returncode != 0 or not produced.is_file():
+            raise RuntimeError("LibreOffice did not cache workbook values: " + proc.stdout + proc.stderr)
+        shutil.copy(produced, path)
+    return True

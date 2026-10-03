@@ -1,0 +1,27 @@
+{
+  "ran_at_america_los_angeles": "2026-10-03T01:31:41-07:00",
+  "offline": true,
+  "source_manifest_rewritten": false,
+  "frozen_file_sha256": "25b815d553ac63453703ab44a77cb42c4739c0b1a3e79adfe0e0c6a00d5f4f27",
+  "published_sveny_excerpt_sha256": "2ac5c63aec74ffdcfcc20f7e081a37ac514e4767aa6e46419ae0518938159807",
+  "beta_units": "percent",
+  "tau_units": "years",
+  "sveny_max_abs_gap_bp": 0.0049536108547521,
+  "sveny_max_abs_gap_bp_by_date": {
+    "2023-03-08": 0.004526861491216394,
+    "2023-03-13": 0.004608000512495991,
+    "2023-07-31": 0.0049536108547521,
+    "2023-10-19": 0.004920699042454402
+  },
+  "decisions": {
+    "current": "still_outside_budget",
+    "benchmark": "reference",
+    "candidate_10pct_s05y": "still_outside_budget",
+    "candidate_expanded_s05y": "needs_approval",
+    "control_2y20y": "reference"
+  },
+  "workbook_values_cached": true,
+  "expanded_turnover_just": 0.4355432277220821,
+  "expanded_turnover_with_buffer": 0.4455432277220821,
+  "breakeven_one_sided_cost_bp": 4.113333299456103
+}

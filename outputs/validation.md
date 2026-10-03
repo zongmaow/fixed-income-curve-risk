@@ -1,6 +1,6 @@
 # Independent validation
 
-This check reimplements the curve, the cash flows, DV01, the six scenarios, the five books, turnover, and the one-sided cost with the Python standard library. It does not import the pricing package.
+This check reimplements the curve, the cash flows, DV01, key-rate DV01, the six scenarios, the five books, turnover, cost, and the decision predicates with the Python standard library. It does not import the pricing package.
 
 The independent calculation is a consistency check of the implementation. It is not a check against executable Treasury quotes.
 
@@ -46,5 +46,12 @@ Maximum relative P&L gap: $8.382e-09.
 - PASS  portfolio scenario P&L: max abs gap $8.382e-09
 - PASS  relative P&L after cost: max abs gap $8.382e-09
 - PASS  just-clearing March relative: -1000000.000000
+- PASS  key-rate weights: 0 cash flows failed
+- PASS  KR01 sum versus DV01: max abs gap 2.543e-08 per 100
+- PASS  current decision: still_outside_budget vs still_outside_budget
+- PASS  benchmark decision: reference vs reference
+- PASS  candidate_10pct_s05y decision: still_outside_budget vs still_outside_budget
+- PASS  candidate_expanded_s05y decision: needs_approval vs needs_approval
+- PASS  control_2y20y decision: reference vs reference
 
 Result: PASS.

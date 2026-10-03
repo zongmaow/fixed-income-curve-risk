@@ -140,14 +140,20 @@ def shifted_zero(beta: dict, shift: float, extra_fn=None):
     return zero_fn
 
 
-def dv01_per_100(flows: list[dict], beta: dict) -> float:
-    """Central difference of a parallel ±1 bp shift of the whole zero curve.
+def dv01_per_100(flows: list[dict], beta: dict, step_bp: float = 1.0) -> float:
+    """Central difference of a parallel shift, normalized to 1 bp.
 
-    Positive DV01 is the price decline for a 1 bp rise in zeros.
+    ``step_bp`` is the half-width of the step in basis points. The result is
+    ``(P(z-h) - P(z+h)) / 2 / step_bp`` with ``h = step_bp * 0.0001``.
+    The default step is 1 bp, which is the DV01 used for the mandate.
+    Positive DV01 is the price decline for a rise in zeros.
     """
-    down = price_cashflows(flows, shifted_zero(beta, -BP))
-    up = price_cashflows(flows, shifted_zero(beta, +BP))
-    return (down - up) / 2.0
+    if step_bp <= 0.0:
+        raise ValueError("step_bp must be positive")
+    h = step_bp * BP
+    down = price_cashflows(flows, shifted_zero(beta, -h))
+    up = price_cashflows(flows, shifted_zero(beta, +h))
+    return (down - up) / 2.0 / step_bp
 
 
 def kr01_per_100(flows: list[dict], beta: dict) -> list[float]:

@@ -129,3 +129,14 @@ Gross traded market value, buys plus sells, is also reported. The illustrative c
 Relative P&L is the book's full-revaluation P&L, minus that one-time cost when the book is a candidate, minus the benchmark's full-revaluation P&L. The benchmark, the current book, and the control book are not charged. The budget is an underperformance of \$1,000,000, which is 1% of initial NAV. There is no absolute-loss limit.
 
 Along the buy-S05Y direction, \(u^\star\) is the smallest turnover that puts every scenario inside the budget after cost, subject to non-negative weights. The expanded book uses \(u^\star+0.01\). The residual cushion is the tightest scenario's distance to −\$1,000,000. Raising the one-sided cost rate until that cushion is zero gives the break-even cost in basis points.
+
+## Decision
+
+The same predicates are used in `src/decision.py` and on the Portfolio sheet.
+
+- `portfolio_valid`: every weight is finite and at least zero, and the weights sum to 1.
+- `dv01_within_mandate`: parallel DV01 is within ±2% of $50,000 per bp.
+- `stress_budget_pass`: every named scenario's relative P&L, after that book's one-time cost, is at least −$1,000,000. No relative series means not a pass.
+- `routine_authority`: turnover versus the current book is at or under the cap in Inputs!B7 (10% of NAV). Zero turnover is inside the cap.
+
+Reference books (the benchmark and the 2-year/20-year control) are not trade requests. Their decision is `reference`. For a standing book or a proposed trade the decision is `invalid_portfolio`, then `still_outside_budget`, then `needs_approval`, then `executable_within_authority`, in that order.

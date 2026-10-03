@@ -171,6 +171,70 @@ def gross(weights, current):
     return buys + sells, buys, sells
 
 
+def key_rate_weights(t):
+    weights = [0.0] * 6
+    if t <= NODES[0]:
+        weights[0] = 1.0
+        return weights
+    if t >= NODES[-1]:
+        weights[-1] = 1.0
+        return weights
+    for i in range(5):
+        if NODES[i] <= t <= NODES[i + 1]:
+            span = NODES[i + 1] - NODES[i]
+            weights[i] = (NODES[i + 1] - t) / span
+            weights[i + 1] = (t - NODES[i]) / span
+            return weights
+    raise RuntimeError(f"no key-rate bracket for {t}")
+
+
+def kr01(flows, beta):
+    out = []
+    for key in range(6):
+        down = price(flows, lambda t, key=key: z_of(t, beta) - BP * key_rate_weights(t)[key])
+        up = price(flows, lambda t, key=key: z_of(t, beta) + BP * key_rate_weights(t)[key])
+        out.append((down - up) / 2.0)
+    return out
+
+
+def decision_from_predicates(role, weights, dv01, relatives, turnover):
+    """Same order as src/decision.py. Reference books are not executable."""
+    valid = (
+        len(weights) > 0
+        and all(math.isfinite(value) and value >= -1e-12 for value in weights.values())
+        and abs(sum(weights.values()) - 1.0) <= 1e-8
+    )
+    dv_ok = math.isfinite(dv01) and abs(dv01 / DV01_TARGET - 1.0) <= 0.02
+    stress_ok = len(relatives) > 0 and all(math.isfinite(value) and value >= -BUDGET - 1e-4 for value in relatives)
+    routine_ok = math.isfinite(turnover) and -1e-10 <= turnover <= 0.10 + 1e-10
+    if role == "reference":
+        decision = "reference"
+    elif not valid:
+        decision = "invalid_portfolio"
+    elif not (dv_ok and stress_ok):
+        decision = "still_outside_budget"
+    elif not routine_ok:
+        decision = "needs_approval"
+    else:
+        decision = "executable_within_authority"
+    return {
+        "portfolio_valid": valid,
+        "dv01_within_mandate": dv_ok,
+        "stress_budget_pass": stress_ok,
+        "routine_authority": routine_ok,
+        "decision": decision,
+    }
+
+
+ROLES = {
+    "current": "standing",
+    "benchmark": "reference",
+    "candidate_10pct_s05y": "proposed",
+    "candidate_expanded_s05y": "proposed",
+    "control_2y20y": "reference",
+}
+
+
 def read_csv(path):
     with path.open(newline="") as handle:
         return list(csv.DictReader(handle))
@@ -282,10 +346,36 @@ def main():
     march_rel = pnl(just_weights, returns[march]) - just_cost - pnl(benchmark, returns[march])
     check("just-clearing March relative", abs(march_rel + BUDGET) < 1e-2, f"{march_rel:.6f}")
 
+    max_kr_gap = 0.0
+    weight_failures = 0
+    for name, _coupon, _maturity in CONTRACTS:
+        flows = built[name]["flows"]
+        for t, _cf in flows:
+            weights_k = key_rate_weights(t)
+            if any(w < -1e-15 for w in weights_k) or abs(sum(weights_k) - 1.0) > 1e-12:
+                weight_failures += 1
+        kr_sum = sum(kr01(flows, beta))
+        max_kr_gap = max(max_kr_gap, abs(kr_sum - built[name]["dv01"]))
+    check("key-rate weights", weight_failures == 0, f"{weight_failures} cash flows failed")
+    check("KR01 sum versus DV01", max_kr_gap < 1e-6, f"max abs gap {max_kr_gap:.3e} per 100")
+
+    for book, weights in solved.items():
+        charge = book in ("candidate_10pct_s05y", "candidate_expanded_s05y")
+        traded, _, _ = gross(weights, current)
+        turnover = 0.5 * traded / NAV
+        cost = ONE_SIDED * traded if charge else 0.0
+        relatives = []
+        for scenario in SCENARIOS:
+            relatives.append(pnl(weights, returns[scenario]) - cost - pnl(benchmark, returns[scenario]))
+        verdict = decision_from_predicates(ROLES[book], weights, sum(weights[name] * NAV * d[name] for name in IDS), relatives, turnover)
+        published = case["books"][book]["governance"]
+        same = all(verdict[key] == published[key] for key in verdict)
+        check(f"{book} decision", same, f"{verdict['decision']} vs {published['decision']}")
+
     lines = [
         "# Independent validation",
         "",
-        "This check reimplements the curve, the cash flows, DV01, the six scenarios, the five books, turnover, and the one-sided cost with the Python standard library. It does not import the pricing package.",
+        "This check reimplements the curve, the cash flows, DV01, key-rate DV01, the six scenarios, the five books, turnover, cost, and the decision predicates with the Python standard library. It does not import the pricing package.",
         "",
         "The independent calculation is a consistency check of the implementation. It is not a check against executable Treasury quotes.",
         "",

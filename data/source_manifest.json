@@ -7,7 +7,6 @@
   "frozen_file_sha256": "25b815d553ac63453703ab44a77cb42c4739c0b1a3e79adfe0e0c6a00d5f4f27",
   "published_sveny_excerpt": "data/published_sveny_event_dates.csv",
   "published_sveny_excerpt_sha256": "2ac5c63aec74ffdcfcc20f7e081a37ac514e4767aa6e46419ae0518938159807",
-  "parameter_units": "percent",
   "compounding": "continuous",
   "parameters": [
     "BETA0",
@@ -56,5 +55,7 @@
     "TAU1": 1.71414947795679,
     "TAU2": 1.714472779363
   },
-  "valuation_date_note": "On 2023-07-31 TAU1 and TAU2 nearly coincide and BETA2, BETA3 are large and opposite. Zeros are still taken from the Svensson function. Shocks are not applied to the six parameters."
+  "valuation_date_note": "On 2023-07-31 TAU1 and TAU2 nearly coincide and BETA2, BETA3 are large and opposite. Zeros are still taken from the Svensson function. Shocks are not applied to the six parameters.",
+  "beta_units": "percent",
+  "tau_units": "years"
 }

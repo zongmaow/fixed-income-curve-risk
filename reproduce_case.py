@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
-import hashlib
+import argparse
 import json
+from datetime import datetime
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 import numpy as np
 import pandas as pd
@@ -18,8 +20,10 @@ from src.bonds import (
     kr01_approx_pnl_per_100,
 )
 from src.curve import load_curve_parameters, load_published_sveny, svensson_zero_percent
+from src.decision import BOOK_ROLES, decide
 from src.portfolio import (
     BUFFER_TURNOVER,
+    aggregate_clearing,
     BUY_CHOICES,
     CASE_BUY,
     DV01_TARGET,
@@ -39,157 +43,28 @@ from src.portfolio import (
     portfolio_dv01,
     portfolio_kr01,
     scenario_return,
+    scenario_turnover_bound,
     solve_benchmark,
     solve_two_bond,
     transaction_cost,
     turnover_and_gross,
 )
 from src.scenarios import SCENARIO_ORDER, build_scenarios
-from src.workbook import build_workbook
+from src.source_gate import assert_sveny_gap, sveny_gaps_bp, verify_or_accept
+from src.workbook import build_workbook, cache_workbook_values
 
 ROOT = Path(__file__).resolve().parent
 DATA = ROOT / "data"
 OUT = ROOT / "outputs"
 
-ORIGINAL_SHA256 = "379cae673092e64aea0baa58796b276ebc5c9c7f2c342d66e7b1fe1e52fd0421"
-DOWNLOAD_TIME = "2026-10-03T00:55:19-07:00"
-SOURCE_URL = "https://www.federalreserve.gov/data/yield-curve-tables/feds200628.csv"
-
-# Figures from the design note, in units of 10,000 dollars, rounded to 0.01.
-# Used only to record disagreements. Not an input to valuation.
-DESIGN_NOTE_WAN = {
-    "parallel_plus_100bp": {
-        "current_pnl": -448.87,
-        "benchmark_pnl": -484.22,
-        "current_relative": 35.35,
-        "candidate_10_relative": 31.40,
-        "expanded_relative": 17.74,
-    },
-    "parallel_minus_100bp": {
-        "current_pnl": 561.10,
-        "benchmark_pnl": 516.60,
-        "current_relative": 44.50,
-        "candidate_10_relative": 39.68,
-        "expanded_relative": 23.02,
-    },
-    "twist_steepener": {
-        "current_pnl": -365.48,
-        "benchmark_pnl": -147.78,
-        "current_relative": -217.70,
-        "candidate_10_relative": -184.01,
-        "expanded_relative": -67.60,
-    },
-    "twist_flattener": {
-        "current_pnl": 189.85,
-        "benchmark_pnl": 24.62,
-        "current_relative": 165.23,
-        "candidate_10_relative": 145.77,
-        "expanded_relative": 78.51,
-    },
-    "hist_2023_03_08_to_2023_03_13": {
-        "current_pnl": 113.69,
-        "benchmark_pnl": 295.71,
-        "current_relative": -182.02,
-        "candidate_10_relative": -163.19,
-        "expanded_relative": -98.12,
-    },
-    "hist_2023_07_31_to_2023_10_19": {
-        "current_pnl": -414.27,
-        "benchmark_pnl": -401.22,
-        "current_relative": -13.05,
-        "candidate_10_relative": -9.55,
-        "expanded_relative": 2.56,
-    },
-}
-DESIGN_CONTROL_RELATIVE_WAN = {
-    "hist_2023_07_31_to_2023_10_19": -4.88,
-    "hist_2023_03_08_to_2023_03_13": -57.12,
-}
-
-
-def sha256(path: Path) -> str:
-    digest = hashlib.sha256()
-    digest.update(path.read_bytes())
-    return digest.hexdigest()
-
-
-def round_bp(value: float) -> float:
-    return float(np.round(np.float64(value), 2))
-
-
-def wan(dollars: float) -> float:
-    return round(dollars / 10_000.0, 2)
-
-
-def write_manifest(curves: dict) -> None:
-    dropped = pd.read_csv(DATA / "dropped_dates.csv")
-    frozen = DATA / "curve_parameters_2022_2023.csv"
-    beta = curves["2023-07-31"]
-    manifest = {
-        "source_url": SOURCE_URL,
-        "source_page": "https://www.federalreserve.gov/data/nominal-yield-curve.htm",
-        "download_time_america_los_angeles": DOWNLOAD_TIME,
-        "original_file_sha256": ORIGINAL_SHA256,
-        "frozen_file": "data/curve_parameters_2022_2023.csv",
-        "frozen_file_sha256": sha256(frozen),
-        "published_sveny_excerpt": "data/published_sveny_event_dates.csv",
-        "published_sveny_excerpt_sha256": sha256(DATA / "published_sveny_event_dates.csv"),
-        "parameter_units": "percent",
-        "compounding": "continuous",
-        "parameters": ["BETA0", "BETA1", "BETA2", "BETA3", "TAU1", "TAU2"],
-        "zero_formula": (
-            "y(n)=BETA0+BETA1*(1-exp(-n/TAU1))/(n/TAU1)"
-            "+BETA2*[(1-exp(-n/TAU1))/(n/TAU1)-exp(-n/TAU1)]"
-            "+BETA3*[(1-exp(-n/TAU2))/(n/TAU2)-exp(-n/TAU2)]; z=y/100"
-        ),
-        "filter": {
-            "start": "2022-01-01",
-            "end": "2023-12-31",
-            "dated_rows": 520,
-            "dropped_missing_beta_or_tau": int(len(dropped)),
-            "usable_days": len(curves),
-        },
-        "dropped_dates": dropped["Date"].tolist(),
-        "valuation_date_parameters": beta,
-        "valuation_date_note": (
-            "On 2023-07-31 TAU1 and TAU2 nearly coincide and BETA2, BETA3 are large "
-            "and opposite. Zeros are still taken from the Svensson function. "
-            "Shocks are not applied to the six parameters."
-        ),
-    }
-    (DATA / "source_manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
-
-
-def write_curve_check(curves: dict, published: dict) -> dict:
-    dates = {}
-    for day, levels in published.items():
-        beta = curves[day]
-        rows = []
-        for maturity, published_y in levels.items():
-            formula = svensson_zero_percent(float(maturity), beta)
-            rows.append(
-                {
-                    "maturity_years": maturity,
-                    "published_sveny_percent": published_y,
-                    "formula_percent": formula,
-                    "difference_bp": (formula - published_y) * 100.0,
-                }
-            )
-        half = svensson_zero_percent(0.5, beta)
-        dates[day] = {
-            "parameters": curves[day],
-            "half_year_formula_percent": half,
-            "half_year_note": "SVENY has no 0.5-year maturity.",
-            "maturities": rows,
-            "max_abs_difference_bp": max(abs(row["difference_bp"]) for row in rows),
-        }
-    payload = {
-        "units": "published SVENY and the formula are continuous zeros in percent",
-        "difference_bp": "(formula - published) * 100",
-        "dates": dates,
-    }
-    (DATA / "source_curve_check.json").write_text(json.dumps(payload, indent=2) + "\n")
-    return payload
+def parse_args(argv=None):
+    parser = argparse.ArgumentParser(description="Rebuild the case from the frozen GSW parameters.")
+    parser.add_argument(
+        "--accept-new-source",
+        action="store_true",
+        help="Rewrite the manifest hashes after an intentional data replacement. A normal run will not.",
+    )
+    return parser.parse_args(argv)
 
 
 def scenario_tables(instruments: dict, beta: dict, scenarios: dict):
@@ -222,48 +97,19 @@ def clearing_analysis(current, benchmark, instruments, returns, buy: str) -> dic
         trade = ret[buy] - alpha * ret["S06M"] - (1.0 - alpha) * ret["S30Y"]
         slope = NAV * (trade - 2.0 * ONE_SIDED_COST)
         rel0 = book_pnl(current, ret) - book_pnl(benchmark, ret)
-        record = {
-            "scenario": scenario,
-            "relative_at_zero_turnover": rel0,
-            "slope_dollars_per_unit_turnover": slope,
-        }
-        if abs(slope) < 1e-8:
-            record["kind"] = "flat"
-            record["feasible_if"] = "already inside" if rel0 >= -RELATIVE_BUDGET else "impossible"
-        elif slope > 0.0:
-            record["kind"] = "lower_bound"
-            record["turnover_bound"] = (-RELATIVE_BUDGET - rel0) / slope
-        else:
-            record["kind"] = "upper_bound"
-            record["turnover_bound"] = (-RELATIVE_BUDGET - rel0) / slope
+        record = scenario_turnover_bound(slope, rel0)
+        record["scenario"] = scenario
         bounds.append(record)
-    lowers = [row["turnover_bound"] for row in bounds if row["kind"] == "lower_bound"]
-    uppers = [row["turnover_bound"] for row in bounds if row["kind"] == "upper_bound"]
-    blocked = [row for row in bounds if row["kind"] == "flat" and row["feasible_if"] == "impossible"]
-    u_just = max([0.0, *lowers])
-    u_cap = min([umax, *uppers]) if uppers else umax
-    feasible = (not blocked) and u_just <= u_cap + 1e-12 and all(
-        row["turnover_bound"] >= -1e-12 or row["kind"] != "upper_bound" for row in bounds
+    summary = aggregate_clearing(bounds, umax)
+    summary.update(
+        {
+            "buy": buy,
+            "s06m_financing_fraction": alpha,
+            "max_turnover_long_only": umax,
+            "bounds": bounds,
+        }
     )
-    # An upper bound below zero means the failing scenario gets worse as turnover rises.
-    if any(row["kind"] == "upper_bound" and row["turnover_bound"] < -1e-12 for row in bounds):
-        feasible = False
-    binding = None
-    if lowers:
-        binding = max(
-            (row for row in bounds if row["kind"] == "lower_bound"),
-            key=lambda row: row["turnover_bound"],
-        )["scenario"]
-    return {
-        "buy": buy,
-        "s06m_financing_fraction": alpha,
-        "max_turnover_long_only": umax,
-        "turnover_just": u_just,
-        "turnover_cap_from_constraints": u_cap,
-        "feasible": feasible,
-        "binding_lower_scenario": binding,
-        "bounds": bounds,
-    }
+    return summary
 
 
 def book_payload(name, weights, instruments, returns, scenarios, current_weights, charge_cost: bool) -> dict:
@@ -316,14 +162,19 @@ def attach_relative(books: dict) -> None:
         book["scenarios"] = book.pop("scenarios_partial")
 
 
-def main() -> None:
-    OUT.mkdir(parents=True, exist_ok=True)
+def main(argv=None) -> None:
+    args = parse_args(argv)
+    manifest = verify_or_accept(DATA, accept_new_source=args.accept_new_source)
     curves = load_curve_parameters(DATA / "curve_parameters_2022_2023.csv")
-    if len(curves) != 499:
-        raise SystemExit(f"expected 499 usable days, found {len(curves)}")
+    if len(curves) != manifest["filter"]["usable_days"]:
+        raise SystemExit(
+            f"expected {manifest['filter']['usable_days']} usable days, found {len(curves)}. "
+            "Refusing to price."
+        )
     published = load_published_sveny(DATA / "published_sveny_event_dates.csv")
-    write_manifest(curves)
-    curve_check = write_curve_check(curves, published)
+    sveny_gap_by_date = sveny_gaps_bp(curves, published, svensson_zero_percent)
+    sveny_gap_bp = assert_sveny_gap(curves, published, svensson_zero_percent)
+    OUT.mkdir(parents=True, exist_ok=True)
 
     beta = curves["2023-07-31"]
     instruments = build_instruments(beta)
@@ -438,43 +289,6 @@ def main() -> None:
         for scenario in SCENARIO_ORDER
     }
 
-    design_differences = []
-    comparisons = {
-        "current_pnl": ("current", "pnl"),
-        "benchmark_pnl": ("benchmark", "pnl"),
-        "current_relative": ("current", "relative_pnl_after_cost"),
-        "candidate_10_relative": ("candidate_10pct_s05y", "relative_pnl_after_cost"),
-        "expanded_relative": ("candidate_expanded_s05y", "relative_pnl_after_cost"),
-    }
-    for scenario, design_row in DESIGN_NOTE_WAN.items():
-        for field, (book_name, key) in comparisons.items():
-            computed = books[book_name]["scenarios"][scenario][key]
-            computed_wan = wan(computed)
-            design_value = design_row[field]
-            if computed_wan != design_value:
-                design_differences.append(
-                    {
-                        "scenario": scenario,
-                        "field": field,
-                        "design_note_wan": design_value,
-                        "computed_wan": computed_wan,
-                        "computed_dollars": computed,
-                    }
-                )
-    for scenario, design_value in DESIGN_CONTROL_RELATIVE_WAN.items():
-        computed = books["control_2y20y"]["scenarios"][scenario]["relative_pnl_after_cost"]
-        computed_wan = wan(computed)
-        if computed_wan != design_value:
-            design_differences.append(
-                {
-                    "scenario": scenario,
-                    "field": "control_relative",
-                    "design_note_wan": design_value,
-                    "computed_wan": computed_wan,
-                    "computed_dollars": computed,
-                }
-            )
-
     control_outside = [
         scenario
         for scenario in SCENARIO_ORDER
@@ -486,6 +300,22 @@ def main() -> None:
     kr_values = list(books["current"]["kr01"].values())
     long_kr_share = (kr_values[4] + kr_values[5]) / sum(kr_values)
 
+    decisions = {}
+    for name in book_specs:
+        relatives = [
+            books[name]["scenarios"][scenario]["relative_pnl_after_cost"] for scenario in SCENARIO_ORDER
+        ]
+        verdict = decide(
+            BOOK_ROLES[name],
+            books[name]["weights"],
+            books[name]["dv01"],
+            relatives,
+            books[name]["turnover_vs_current"],
+            ROUTINE_TURNOVER_CAP,
+        )
+        books[name]["governance"] = verdict
+        decisions[name] = verdict["decision"]
+
     case = {
         "valuation_date": "2023-07-31",
         "nav": NAV,
@@ -494,6 +324,7 @@ def main() -> None:
         "relative_loss_budget": RELATIVE_BUDGET,
         "one_sided_cost_bp": ONE_SIDED_COST_BP,
         "routine_turnover_cap": ROUTINE_TURNOVER_CAP,
+        "decisions": decisions,
         "accrued_interest": "out of scope; every contract accrues from the valuation date, so accrued is 0 and clean equals dirty",
         "twist": {
             "short_node_years": 2.0,
@@ -505,9 +336,8 @@ def main() -> None:
             "not": "These are not bear steepeners or bull flatteners.",
         },
         "node_shock_checks": node_checks,
-        "curve_check_max_abs_bp": {
-            day: curve_check["dates"][day]["max_abs_difference_bp"] for day in curve_check["dates"]
-        },
+        "curve_check_max_abs_bp": sveny_gap_by_date,
+        "curve_check_worst_abs_bp": sveny_gap_bp,
         "diagnostics": {
             "current_s30y_weight": current["S30Y"],
             "current_s30y_share_of_dv01": s30_share,
@@ -534,6 +364,7 @@ def main() -> None:
                     "cost",
                     "charge_cost",
                     "scenarios",
+                    "governance",
                 )
             }
             for name in book_specs
@@ -572,7 +403,6 @@ def main() -> None:
             "breakeven_one_sided_cost_bp": breakeven_bp,
             "gross_traded": gross,
         },
-        "design_note_differences": design_differences,
     }
     (OUT / "case_results.json").write_text(json.dumps(case, indent=2) + "\n")
 
@@ -648,6 +478,47 @@ def main() -> None:
             )
     pd.DataFrame(bond_rows).to_csv(OUT / "scenario_bond_results.csv", index=False)
 
+    contribution_rows = []
+    kr_rows = []
+    for book_name in book_specs:
+        book = books[book_name]
+        for name in INSTRUMENT_IDS:
+            dirty = instruments[name]["dirty"]
+            market_value = book["market_value"][name]
+            scale = 0.0 if market_value == 0.0 else market_value / dirty
+            for scenario in SCENARIO_ORDER:
+                per_100 = pnl[name][scenario]
+                contribution_rows.append(
+                    {
+                        "book": book_name,
+                        "instrument": name,
+                        "scenario": scenario,
+                        "market_value": market_value,
+                        "pnl_per_100_face": per_100,
+                        "pnl_dollars": scale * per_100,
+                    }
+                )
+            for node, kr in zip(KEY_RATE_NODES, instruments[name]["kr01_per_100"]):
+                kr_rows.append(
+                    {
+                        "book": book_name,
+                        "instrument": name,
+                        "node_years": node,
+                        "kr01_dollars": scale * kr,
+                    }
+                )
+        for node, value in book["kr01"].items():
+            kr_rows.append(
+                {
+                    "book": book_name,
+                    "instrument": "BOOK",
+                    "node_years": float(node),
+                    "kr01_dollars": value,
+                }
+            )
+    pd.DataFrame(contribution_rows).to_csv(OUT / "scenario_contributions.csv", index=False)
+    pd.DataFrame(kr_rows).to_csv(OUT / "kr01_by_bond.csv", index=False)
+
     snap_rows = []
     for day in ("2023-03-08", "2023-03-13", "2023-07-31", "2023-10-19"):
         for node in KEY_RATE_NODES:
@@ -683,24 +554,43 @@ def main() -> None:
             )
     pd.DataFrame(snap_rows).to_csv(OUT / "curve_snapshots.csv", index=False)
 
+    workbook_path = ROOT / "fixed_income_case.xlsx"
     build_workbook(
-        ROOT / "fixed_income_case.xlsx",
+        workbook_path,
         instruments,
         books,
         pnl,
         instruments["S05Y"]["detail"],
         breakeven_bp,
     )
+    workbook_cached = cache_workbook_values(workbook_path)
 
     print(f"usable days {len(curves)}")
     print(f"S05Y just {s05['turnover_just']:.8f} buffer {expanded_turnover:.8f} bind {s05['binding_lower_scenario']}")
     print(f"cushion {cushion:.4f} breakeven_bp {breakeven_bp:.4f} tight {tightest}")
     print(f"best direction {best['buy']} at {best['turnover_just']:.8f}; lower than S05Y: {lower_than_s05}")
     print(f"control outside {control_outside}")
-    print(f"design differences {len(design_differences)}")
-    for row in design_differences:
-        print(" ", row["scenario"], row["field"], "design", row["design_note_wan"], "computed", row["computed_wan"])
+    record = {
+        "ran_at_america_los_angeles": datetime.now(ZoneInfo("America/Los_Angeles")).isoformat(timespec="seconds"),
+        "offline": True,
+        "source_manifest_rewritten": False,
+        "frozen_file_sha256": manifest["frozen_file_sha256"],
+        "published_sveny_excerpt_sha256": manifest["published_sveny_excerpt_sha256"],
+        "beta_units": manifest["beta_units"],
+        "tau_units": manifest["tau_units"],
+        "sveny_max_abs_gap_bp": sveny_gap_bp,
+        "sveny_max_abs_gap_bp_by_date": sveny_gap_by_date,
+        "decisions": decisions,
+        "workbook_values_cached": workbook_cached,
+        "expanded_turnover_just": s05["turnover_just"],
+        "expanded_turnover_with_buffer": expanded_turnover,
+        "breakeven_one_sided_cost_bp": breakeven_bp,
+    }
+    (OUT / "offline_reproduction.json").write_text(json.dumps(record, indent=2) + "\n")
+
     print("weights")
+    print("decisions", decisions)
+    print("workbook cached", workbook_cached)
     for name in book_specs:
         print(name, {k: round(v, 8) for k, v in books[name]["weights"].items() if v})
         print("  dv01", books[name]["dv01"], "cost", books[name]["cost"], "turnover", books[name]["turnover_vs_current"])
