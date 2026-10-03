@@ -13,7 +13,6 @@ from __future__ import annotations
 
 import math
 
-NAV = 100_000_000.0
 DV01_TARGET = 50_000.0
 DV01_TOLERANCE = 0.02
 DV01_DUST = 1e-6
