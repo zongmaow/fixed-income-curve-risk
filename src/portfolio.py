@@ -15,7 +15,7 @@ RELATIVE_BUDGET = 1_000_000.0
 ROUTINE_TURNOVER_CAP = 0.10
 ONE_SIDED_COST_BP = 2.0
 ONE_SIDED_COST = ONE_SIDED_COST_BP / 10_000.0
-BUFFER_TURNOVER = 0.01
+DISPLAY_TURNOVER_INCREMENT = 0.01
 BUY_CHOICES = ("S02Y", "S03Y", "S05Y", "S07Y", "S10Y", "S20Y")
 CASE_BUY = "S05Y"
 
@@ -157,10 +157,9 @@ def candidate_stress_cushion(
     scenarios: tuple[str, ...] | list[str],
     budget: float = RELATIVE_BUDGET,
 ) -> dict:
-    """Relative P&L after one illustrative cost for an already defined buy size.
+    """Evaluate after-cost stress P&L and minimum budget headroom for a fixed purchase size.
 
-    The size is a comparison point. This does not search for a new portfolio.
-    DV01 is the pre-cost figure. The cost is charged once against P&L.
+    Report pre-cost DV01 and convexity. The cost is charged once against P&L.
     """
     weights = candidate_weights(current, instruments, buy, turnover)
     turn, gross, buys, sells = turnover_and_gross(weights, current)

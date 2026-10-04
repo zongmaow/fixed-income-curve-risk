@@ -22,7 +22,7 @@ from src.bonds import (
 from src.curve import load_curve_parameters, load_published_sveny, svensson_zero_percent
 from src.decision import BOOK_ROLES, decide
 from src.portfolio import (
-    BUFFER_TURNOVER,
+    DISPLAY_TURNOVER_INCREMENT,
     aggregate_clearing,
     BUY_CHOICES,
     CASE_BUY,
@@ -129,9 +129,8 @@ def lowest_clearing_buy(
     budget: float = RELATIVE_BUDGET,
     one_sided_cost: float = ONE_SIDED_COST,
 ) -> dict:
-    """Lowest-turnover buy inside the existing six-name family.
-
-    The same scenarios choose the trade and grade it. This is not a new search.
+    """Return the minimum-turnover feasible direction among BUY_CHOICES
+    under the case's six scenarios, supplied budget and cost rate.
     """
     family = [
         clearing_analysis(
@@ -265,7 +264,7 @@ def main(argv=None) -> None:
     s05 = next(row for row in family if row["buy"] == CASE_BUY)
     if not s05["feasible"]:
         raise SystemExit("S05Y direction cannot clear the six scenarios")
-    expanded_turnover = s05["turnover_just"] + BUFFER_TURNOVER
+    expanded_turnover = s05["turnover_just"] + DISPLAY_TURNOVER_INCREMENT
     if expanded_turnover > s05["max_turnover_long_only"] + 1e-12:
         raise SystemExit("1 percentage-point buffer exceeds the long-only limit")
     candidate_10 = normalize_weights(
@@ -441,7 +440,7 @@ def main(argv=None) -> None:
             "turnover_just": s05["turnover_just"],
             "binding_scenario_at_just": s05["binding_lower_scenario"],
             "turnover_with_one_point_buffer": expanded_turnover,
-            "buffer": BUFFER_TURNOVER,
+            "buffer": DISPLAY_TURNOVER_INCREMENT,
             "just_clearing_relative_pnl": just_relative,
             "just_clearing_turnover_check": just_turnover,
             "tightest_scenario": tightest,

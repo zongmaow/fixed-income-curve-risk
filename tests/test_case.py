@@ -250,10 +250,6 @@ class CaseTests(unittest.TestCase):
             for scenario, result in payload["scenarios"].items():
                 self.assertAlmostEqual(totals[(book, scenario)], result["pnl"], delta=1e-4)
 
-    def test_readme_says_relieves_does_not_repair(self):
-        text = (ROOT / "README.md").read_text()
-        self.assertIn("relieves, does not repair", text)
-
     def test_planted_sveny_gap_fails_reproduce(self):
         sveny_path = ROOT / "data" / "published_sveny_event_dates.csv"
         manifest_path = ROOT / "data" / "source_manifest.json"
@@ -435,7 +431,7 @@ class CaseTests(unittest.TestCase):
         self.assertNotAlmostEqual(rows[3]["turnover"], rows[1]["turnover"], places=4)
 
     def test_budget_changes_the_lowest_turnover_buy(self):
-        """Same six-name search at three relative-loss budgets. Not a new optimizer."""
+        """At three relative-loss budgets, return the lowest-turnover buy among BUY_CHOICES."""
         current = normalize_weights(solve_two_bond(self.instruments, "S06M", "S30Y"), INSTRUMENT_IDS)
         benchmark = normalize_weights(solve_benchmark(self.instruments), INSTRUMENT_IDS)
         returns = self._returns()

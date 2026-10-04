@@ -115,7 +115,7 @@ On the current book, under the March 2023 shock transplanted onto the July contr
 | Node KR01 approximation \(K\) | +1,135,463.50 | +1,407.61 |
 | Cash-flow approximation \(L\) | +1,117,369.00 | +19,502.10 |
 
-\(F - K = (F - L) + (L - K)\). The cash-flow gap is +19,502.10. The representation gap \(L - K\) is −18,094.50. They offset, and the node approximation is the closer of the two here: 19,502.102 + (−18,094.497) = 1,407.605, which is \(F - K\) before rounding to the cent. A small residual does not, by itself, show that the node story is the right split.
+\(F - K = (F - L) + (L - K)\). The cash-flow gap is +19,502.10. \(L - K\), −18,094.50, is mainly the node-representation gap and includes a small finite-difference discrepancy between summed KR01 and the cash-flow derivative. They offset, and the node approximation is the closer of the two here: 19,502.102 + (−18,094.497) = 1,407.605, which is \(F - K\) before rounding to the cent. A small residual does not, by itself, show that the node story is the right split.
 
 ## Books, turnover, cost
 
