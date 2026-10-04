@@ -146,6 +146,53 @@ def transaction_cost(gross_traded: float, one_sided_cost: float = ONE_SIDED_COST
     return one_sided_cost * gross_traded
 
 
+def candidate_stress_cushion(
+    current: dict[str, float],
+    instruments: dict,
+    returns: dict[str, dict[str, float]],
+    benchmark_pnl: dict[str, float],
+    buy: str,
+    turnover: float,
+    one_sided_cost: float,
+    scenarios: tuple[str, ...] | list[str],
+    budget: float = RELATIVE_BUDGET,
+) -> dict:
+    """Relative P&L after one illustrative cost for an already defined buy size.
+
+    The size is a comparison point. This does not search for a new portfolio.
+    DV01 is the pre-cost figure. The cost is charged once against P&L.
+    """
+    weights = candidate_weights(current, instruments, buy, turnover)
+    turn, gross, buys, sells = turnover_and_gross(weights, current)
+    cost = transaction_cost(gross, one_sided_cost)
+    dv01 = portfolio_dv01(weights, instruments)
+    convexity = portfolio_convexity(weights, instruments)
+    relative = {}
+    for scenario in scenarios:
+        pnl = book_pnl(weights, returns[scenario])
+        relative[scenario] = pnl - cost - benchmark_pnl[scenario]
+    worst = min(relative, key=relative.get)
+    weight_sum = sum(weights.values())
+    long_only = abs(weight_sum - 1.0) <= 1e-8 and all(value >= -1e-12 for value in weights.values())
+    return {
+        "buy": buy,
+        "turnover": turn,
+        "gross_traded": gross,
+        "buys": buys,
+        "sells": sells,
+        "cost": cost,
+        "one_sided_cost": one_sided_cost,
+        "dv01": dv01,
+        "convexity": convexity,
+        "long_only": long_only,
+        "worst_scenario": worst,
+        "worst_relative_pnl": relative[worst],
+        "cushion_vs_budget": relative[worst] + budget,
+        "relative_pnl": relative,
+        "weights": weights,
+    }
+
+
 def scenario_return(instrument: dict, pnl_per_100: float) -> float:
     """P&L per dollar of market value."""
     return pnl_per_100 / instrument["dirty"]

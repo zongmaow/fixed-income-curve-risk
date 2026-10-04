@@ -88,16 +88,25 @@ def scenario_tables(instruments: dict, beta: dict, scenarios: dict):
     return pnl, returns, shocked, approx_kr, approx_cf
 
 
-def clearing_analysis(current, benchmark, instruments, returns, buy: str) -> dict:
+def clearing_analysis(
+    current,
+    benchmark,
+    instruments,
+    returns,
+    buy: str,
+    budget: float = RELATIVE_BUDGET,
+    one_sided_cost: float = ONE_SIDED_COST,
+) -> dict:
+    """Same six-name search. `budget` and `one_sided_cost` default to the case."""
     alpha = financing_split(instruments, buy)
     umax = max_feasible_turnover(current, instruments, buy)
     bounds = []
     for scenario in SCENARIO_ORDER:
         ret = returns[scenario]
         trade = ret[buy] - alpha * ret["S06M"] - (1.0 - alpha) * ret["S30Y"]
-        slope = NAV * (trade - 2.0 * ONE_SIDED_COST)
+        slope = NAV * (trade - 2.0 * one_sided_cost)
         rel0 = book_pnl(current, ret) - book_pnl(benchmark, ret)
-        record = scenario_turnover_bound(slope, rel0)
+        record = scenario_turnover_bound(slope, rel0, budget=budget)
         record["scenario"] = scenario
         bounds.append(record)
     summary = aggregate_clearing(bounds, umax)
@@ -110,6 +119,43 @@ def clearing_analysis(current, benchmark, instruments, returns, buy: str) -> dic
         }
     )
     return summary
+
+
+def lowest_clearing_buy(
+    current,
+    benchmark,
+    instruments,
+    returns,
+    budget: float = RELATIVE_BUDGET,
+    one_sided_cost: float = ONE_SIDED_COST,
+) -> dict:
+    """Lowest-turnover buy inside the existing six-name family.
+
+    The same scenarios choose the trade and grade it. This is not a new search.
+    """
+    family = [
+        clearing_analysis(
+            current,
+            benchmark,
+            instruments,
+            returns,
+            buy,
+            budget=budget,
+            one_sided_cost=one_sided_cost,
+        )
+        for buy in BUY_CHOICES
+    ]
+    feasible = [row for row in family if row["feasible"]]
+    if not feasible:
+        return {"feasible": False, "family": family}
+    best = min(feasible, key=lambda row: row["turnover_just"])
+    return {
+        "feasible": True,
+        "buy": best["buy"],
+        "turnover_just": best["turnover_just"],
+        "binding_lower_scenario": best["binding_lower_scenario"],
+        "family": family,
+    }
 
 
 def book_payload(name, weights, instruments, returns, scenarios, current_weights, charge_cost: bool) -> dict:

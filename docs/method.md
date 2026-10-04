@@ -103,7 +103,19 @@ Cash-flow approximation, using the actual \(\Delta z\) at each payment time:
 \Delta P \approx \sum_i -T_i\,\mathrm{PV}_i\,\Delta z(T_i).
 \]
 
-For a parallel move, or for the twist defined above, the node shocks represent \(\Delta z(T)\) exactly, so the gap between the node approximation and full revaluation is convexity and higher order. For a historical move, the six nodes do not represent \(\Delta z(T)\). The gap versus full revaluation then mixes that representation error with convexity. The cash-flow approximation uses the exact \(\Delta z(T_i)\) and leaves a smaller gap, which is the higher-order revaluation effect. Calling the whole node gap "convexity" is not right.
+For a parallel move, or for the twist defined above, the node shocks represent \(\Delta z(T)\) exactly, so the gap between the node approximation and full revaluation is convexity and higher order. For a historical move, the six nodes do not represent \(\Delta z(T)\). The gap versus full revaluation then mixes that representation error with convexity. Calling the whole node gap "convexity" is not right.
+
+The cash-flow approximation uses the exact shock at each payment time and removes the node representation error. Its remaining gap reflects higher-order revaluation effects, but it is not necessarily numerically closer to full revaluation: representation and higher-order errors can offset in the node approximation.
+
+On the current book, under the March 2023 shock transplanted onto the July contracts, the three P&Ls are:
+
+| Method | P&L | Full revaluation minus this |
+| --- | ---: | ---: |
+| Full revaluation \(F\) | +1,136,871.10 | |
+| Node KR01 approximation \(K\) | +1,135,463.50 | +1,407.61 |
+| Cash-flow approximation \(L\) | +1,117,369.00 | +19,502.10 |
+
+\(F - K = (F - L) + (L - K)\). The cash-flow gap is +19,502.10. The representation gap \(L - K\) is −18,094.50. They offset, and the node approximation is the closer of the two here: 19,502.102 + (−18,094.497) = 1,407.605, which is \(F - K\) before rounding to the cent. A small residual does not, by itself, show that the node story is the right split.
 
 ## Books, turnover, cost
 

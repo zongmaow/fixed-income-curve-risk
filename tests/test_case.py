@@ -35,9 +35,12 @@ from src.portfolio import (  # noqa: E402
     NAV,
     RELATIVE_BUDGET,
     aggregate_clearing,
+    book_pnl,
+    candidate_stress_cushion,
     candidate_weights,
     normalize_weights,
     portfolio_dv01,
+    scenario_return,
     scenario_turnover_bound,
     solve_benchmark,
     solve_two_bond,
@@ -45,7 +48,8 @@ from src.portfolio import (  # noqa: E402
     turnover_and_gross,
 )
 from src.scenarios import SCENARIO_ORDER, build_scenarios, historical_dz  # noqa: E402
-from reproduce_case import clearing_analysis  # noqa: E402
+from reproduce_case import clearing_analysis, lowest_clearing_buy  # noqa: E402
+from src.bonds import full_reval_pnl_per_100  # noqa: E402
 
 DESIGN_PRICES = {
     "S06M": 99.582157,
@@ -379,6 +383,80 @@ class CaseTests(unittest.TestCase):
             self.assertEqual(recalculated["Portfolio"].cell(17, 2).value, "inside")
             self.assertTrue(recalculated["Portfolio"].cell(49, 2).value)
             self.assertEqual(recalculated["Portfolio"].cell(17, 3).value, "inside")
+
+    def _returns(self):
+        scenarios = build_scenarios(self.curves)
+        beta = self.curves["2023-07-31"]
+        returns = {}
+        for scenario in SCENARIO_ORDER:
+            returns[scenario] = {}
+            for name, instrument in self.instruments.items():
+                per_100 = full_reval_pnl_per_100(instrument, beta, scenarios[scenario]["dz"])
+                returns[scenario][name] = scenario_return(instrument, per_100)
+        return returns
+
+    def test_cost_cushion_comparison(self):
+        """Higher one-sided cost, and a larger comparison trade, reuse the same books."""
+        current = normalize_weights(solve_two_bond(self.instruments, "S06M", "S30Y"), INSTRUMENT_IDS)
+        benchmark = normalize_weights(solve_benchmark(self.instruments), INSTRUMENT_IDS)
+        returns = self._returns()
+        benchmark_pnl = {scenario: book_pnl(benchmark, returns[scenario]) for scenario in SCENARIO_ORDER}
+        screen = clearing_analysis(current, benchmark, self.instruments, returns, "S05Y")
+        shown = screen["turnover_just"] + 0.01
+        specs = (
+            (shown, 2.0 / 10_000.0, -981_168.373210, 18_831.626790, 76.281108),
+            (shown, 4.2 / 10_000.0, -1_000_772.275230, -772.275230, 76.281108),
+            (0.50, 2.0 / 10_000.0, -878_617.412038, 121_382.587962, 71.971970),
+            (0.50, 4.2 / 10_000.0, -900_617.412038, 99_382.587962, 71.971970),
+        )
+        rows = []
+        for turnover, cost_rate, worst, cushion, convexity in specs:
+            row = candidate_stress_cushion(
+                current,
+                self.instruments,
+                returns,
+                benchmark_pnl,
+                "S05Y",
+                turnover,
+                cost_rate,
+                SCENARIO_ORDER,
+            )
+            self.assertTrue(row["long_only"])
+            self.assertAlmostEqual(row["dv01"], DV01_TARGET, delta=1e-6)
+            self.assertEqual(row["worst_scenario"], "hist_2023_03_08_to_2023_03_13")
+            self.assertAlmostEqual(row["worst_relative_pnl"], worst, delta=0.02)
+            self.assertAlmostEqual(row["cushion_vs_budget"], cushion, delta=0.02)
+            self.assertAlmostEqual(row["convexity"], convexity, delta=1e-4)
+            rows.append(row)
+        self.assertAlmostEqual(rows[0]["cushion_vs_budget"], self.case["expanded_s05y"]["cushion_dollars"], delta=1e-4)
+        self.assertLess(rows[1]["cushion_vs_budget"], 0.0)
+        self.assertGreater(rows[3]["cushion_vs_budget"], 0.0)
+        self.assertLess(rows[2]["convexity"], rows[0]["convexity"])
+        self.assertNotAlmostEqual(rows[3]["turnover"], rows[1]["turnover"], places=4)
+
+    def test_budget_changes_the_lowest_turnover_buy(self):
+        """Same six-name search at three relative-loss budgets. Not a new optimizer."""
+        current = normalize_weights(solve_two_bond(self.instruments, "S06M", "S30Y"), INSTRUMENT_IDS)
+        benchmark = normalize_weights(solve_benchmark(self.instruments), INSTRUMENT_IDS)
+        returns = self._returns()
+        expected = (
+            (500_000.0, "S07Y", 0.6693376628, "hist_2023_03_08_to_2023_03_13"),
+            (1_000_000.0, "S05Y", 0.4355432277, "hist_2023_03_08_to_2023_03_13"),
+            (1_500_000.0, "S05Y", 0.1752569620, "twist_steepener"),
+        )
+        for budget, buy, turnover, binding in expected:
+            found = lowest_clearing_buy(current, benchmark, self.instruments, returns, budget=budget)
+            self.assertTrue(found["feasible"])
+            self.assertEqual(found["buy"], buy)
+            self.assertEqual(found["binding_lower_scenario"], binding)
+            self.assertAlmostEqual(found["turnover_just"], turnover, places=8)
+        base = lowest_clearing_buy(current, benchmark, self.instruments, returns)
+        self.assertEqual(base["buy"], self.case["case_decision"]["lowest_feasible_direction"]["buy"])
+        self.assertAlmostEqual(
+            base["turnover_just"],
+            self.case["expanded_s05y"]["turnover_just"],
+            places=8,
+        )
 
     def test_front_bucket_kr01_fails_node_comparison(self):
         import validate_independently as independent
